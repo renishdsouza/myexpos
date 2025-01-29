@@ -1,0 +1,24 @@
+alias one R0;
+one = 0;
+alias two R1;
+two = 0;
+alias in R2;
+in = 0;
+while(in != -1) do
+    read;
+    in=P0;
+    print 6;
+    while(in == 0) do
+        read;
+        in=P0;
+    endwhile;
+    print 7;
+    if(in > one && in > two) then
+        one=in;
+    endif;
+    if(in < one && in > two) then
+        two=in;
+    endif;
+endwhile;
+print one;
+print two;

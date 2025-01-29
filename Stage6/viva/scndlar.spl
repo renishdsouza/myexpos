@@ -1,0 +1,17 @@
+alias one R0;
+one = 0;
+alias two R1;
+two = 0;
+alias in R2;
+in = 0;
+while(in != -1) do
+    readi in;
+    if(in > one && in > two) then
+        one=in;
+    endif;
+    if(in < one && in > two) then
+        two=in;
+    endif;
+endwhile;
+print one;
+print two;
