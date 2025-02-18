@@ -1,0 +1,3 @@
+ load --os $HOME/myexpos/Stage10/os_stg10_startup.xsm
+load --init $HOME/myexpos/Stage10/init_stg10.xsm
+load --int=7 $HOME/myexpos/Stage10/int7_write_stg10.xsm
