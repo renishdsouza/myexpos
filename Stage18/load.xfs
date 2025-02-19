@@ -1,0 +1,17 @@
+load --os $HOME/myexpos/Stage18/startup.xsm
+load --init $HOME/myexpos/Stage18/init.xsm
+load --idle $HOME/myexpos/Stage18/idle.xsm
+load --exec $HOME/myexpos/Stage18/prime.xsm
+load --int=timer $HOME/myexpos/Stage18/timer.xsm
+load --int=disk $HOME/myexpos/Stage18/diskint.xsm
+load --int=console $HOME/myexpos/Stage18/console.xsm
+load --int=6 $HOME/myexpos/Stage18/int6read.xsm
+load --int=7 $HOME/myexpos/Stage18/int7write.xsm
+load --int=9 $HOME/myexpos/Stage18/int9exec.xsm
+load --int=10 $HOME/myexpos/Stage18/int10ex.xsm
+load --module 0 $HOME/myexpos/Stage18/mod0rm.xsm
+load --module 1 $HOME/myexpos/Stage18/mod1prm.xsm
+load --module 2 $HOME/myexpos/Stage18/mod2mm.xsm
+load --module 4 $HOME/myexpos/Stage18/mod4dm.xsm
+load --module 5 $HOME/myexpos/Stage18/mod5sc.xsm
+load --module 7 $HOME/myexpos/Stage18/mod7bt.xsm
