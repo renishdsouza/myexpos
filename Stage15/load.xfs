@@ -1,0 +1,12 @@
+load --os $HOME/myexpos/Stage15/startup.xsm
+load --init $HOME/myexpos/Stage15/init.xsm
+load --idle $HOME/myexpos/Stage15/idle.xsm
+load --exec $HOME/myexpos/Stage15/prime.xsm
+load --exec $HOME/myexpos/Stage15/even.xsm
+load --int=7 $HOME/myexpos/Stage15/int7write.xsm
+load --int=10 $HOME/myexpos/Stage15/int10ex.xsm
+load --int=timer $HOME/myexpos/Stage15/timer.xsm
+load --module 5 $HOME/myexpos/Stage15/mod5sc.xsm
+load --module 7 $HOME/myexpos/Stage15/mod7bt.xsm
+load --module 0 $HOME/myexpos/Stage15/mod0rm.xsm
+load --module 4 $HOME/myexpos/Stage15/mod4dm.xsm
