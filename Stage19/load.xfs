@@ -1,7 +1,8 @@
 load --os $HOME/myexpos/Stage19/startup.xsm
 load --init $HOME/myexpos/Stage19/init.xsm
 load --idle $HOME/myexpos/Stage19/idle.xsm
-load --idle $HOME/myexpos/Stage19/Assign1/LiList.xsm
+load --exec $HOME/myexpos/Stage19/Assign1/LiList.xsm
+load --exhandler $HOME/myexpos/Stage19/except.xsm
 load --int=timer $HOME/myexpos/Stage19/timer.xsm
 load --int=disk $HOME/myexpos/Stage19/diskint.xsm
 load --int=console $HOME/myexpos/Stage19/console.xsm
