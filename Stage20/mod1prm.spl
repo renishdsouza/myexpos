@@ -1,100 +1,139 @@
-//Process Manager (MOD 1)
+// Process Manager (MOD 1)
 
 alias fnNumber R1;
 alias currentPID R2;
 
 // GET PCB Entry
 if(fnNumber == 1) then
-	alias PID R0;
-	
-	while([PROCESS_TABLE + PID*16 + 4] != TERMINATED) do
-		PID = PID + 1;
-	endwhile;
-	if(PID > 15) then
-		PID = -1;
-		return;
-	endif;
-	[PROCESS_TABLE + PID*16 + 1] = PID;
-	[PROCESS_TABLE + PID*16 + 4] = ALLOCATED;
-	[PROCESS_TABLE + PID*16 + 14] = PAGE_TABLE_BASE + 20*PID;
-	[PROCESS_TABLE + PID*16 + 15] = 10;
-	return;
-
+    alias PID R0;
+    
+    // Find a terminated process slot in the process table
+    while([PROCESS_TABLE + PID*16 + 4] != TERMINATED) do
+        PID = PID + 1;
+    endwhile;
+    
+    // If no terminated process slot is found, set PID to -1 and return
+    if(PID > 15) then
+        PID = -1;
+        return;
+    endif;
+    
+    // Initialize the process table entry for the new process
+    [PROCESS_TABLE + PID*16 + 1] = PID;
+    [PROCESS_TABLE + PID*16 + 4] = ALLOCATED;
+    [PROCESS_TABLE + PID*16 + 14] = PAGE_TABLE_BASE + 20*PID;
+    [PROCESS_TABLE + PID*16 + 15] = 10;
+    return;
 endif;
-
-
 
 // FREE USER AREA PAGE
 if(fnNumber == 2) then
-	alias userAreaPage R3;
-	userAreaPage = [PROCESS_TABLE + 16*currentPID + 11];
-	multipush(R1, R2, R3);
-	R1 = 2;
-	R2 = userAreaPage;
-	breakpoint;
-	call MOD_2;
-	multipop(R1, R2, R3);
-	return;
+    alias userAreaPage R3;
+    
+    // Get the user area page number from the process table
+    userAreaPage = [PROCESS_TABLE + 16*currentPID + 11];
+    
+    // Save registers R1, R2, R3
+    multipush(R1, R2, R3);
+    
+    // Set parameters for MOD_2 call to free the user area page
+    R1 = 2;
+    R2 = userAreaPage;
+    breakpoint;
+    call MOD_2;
+    
+    // Restore registers R1, R2, R3
+    multipop(R1, R2, R3);
+    return;
 endif;
 
 // EXIT PROCESS
 if(fnNumber == 3) then
-	multipush(R1, R2);
-	R1 = 4;
-	R2 = currentPID;
-	call MOD_1;
-	multipop(R1, R2);
-	breakpoint;
-	multipush(R1, R2);
-	R1 = 2;
-	R2 = currentPID;
-	breakpoint;
-	call MOD_1;
-	multipop(R1, R2);
-	[PROCESS_TABLE + (16*currentPID) + 4] = TERMINATED;
-	return;
+    // Save registers R1, R2
+    multipush(R1, R2);
+    
+    // Set parameters for MOD_1 call to terminate the process
+    R1 = 4;
+    R2 = currentPID;
+    call MOD_1;
+    
+    // Restore registers R1, R2
+    multipop(R1, R2);
+    breakpoint;
+    
+    // Save registers R1, R2
+    multipush(R1, R2);
+    
+    // Set parameters for MOD_1 call to free the process resources
+    R1 = 2;
+    R2 = currentPID;
+    breakpoint;
+    call MOD_1;
+    
+    // Restore registers R1, R2
+    multipop(R1, R2);
+    
+    // Mark the process as terminated in the process table
+    [PROCESS_TABLE + (16*currentPID) + 4] = TERMINATED;
+    return;
 endif;
 
 // FREE PAGE TABLE
 if(fnNumber == 4) then
-	
-	[PTBR + 0] = -1;
-	[PTBR + 1] = "0000";	
-	[PTBR + 2] = -1;
-	[PTBR + 3] = "0000";
+    // Initialize the first two entries of the page table
+    [PTBR + 0] = -1;
+    [PTBR + 1] = "0000";	
+    [PTBR + 2] = -1;
+    [PTBR + 3] = "0000";
 
-	alias i R5;
-	alias pageNum R4;
-	i = 1;
+    alias i R5;
+    alias pageNum R4;
+    i = 1;
 
-	while(i<(PTLR-1)) do
-		pageNum = [PTBR + 2 + 2*i];
-		if(pageNum!=-1) then
-			multipush(R1, R2, R3, R4);
-			R1 = 2;
-			R2 = pageNum;
-			call MOD_2;
-			multipop(R1, R2, R3, R4);
-			[PTBR + 2 + 2*i] = -1;
-			[PTBR + 2 + 2*i + 1] = "0000";	
-		endif;
-	i = i + 1;
-	endwhile;
-	i=2;
-	while(i<10) do
-	if([DISK_MAP_TABLE + currentPID*10 + i] != -1) then
-		if(i<4 || i>7) then
-			multipush(R1, R2, R4, R5);
-			R1 = 4;
-			R3 = currentPID;
-			R2 = [DISK_MAP_TABLE + currentPID*10 + i];
-			call MOD_2;
-			multipop(R1, R2, R4, R5);
-		endif;
-		[DISK_MAP_TABLE + currentPID*10 + i] = -1;
-	endif;
-	i = i + 1;
-	endwhile;
-	return;
-
+    // Free all allocated pages in the page table
+    while(i<(PTLR-1)) do
+        pageNum = [PTBR + 2 + 2*i];
+        if(pageNum!=-1) then
+            // Save registers R1, R2, R3, R4
+            multipush(R1, R2, R3, R4);
+            
+            // Set parameters for MOD_2 call to free the page
+            R1 = 2;
+            R2 = pageNum;
+            call MOD_2;
+            
+            // Restore registers R1, R2, R3, R4
+            multipop(R1, R2, R3, R4);
+            
+            // Mark the page table entry as free
+            [PTBR + 2 + 2*i] = -1;
+            [PTBR + 2 + 2*i + 1] = "0000";	
+        endif;
+        i = i + 1;
+    endwhile;
+    
+    i=2;
+    
+    // Free all allocated disk blocks in the disk map table
+    while(i<10) do
+        if([DISK_MAP_TABLE + currentPID*10 + i] != -1) then
+            if(i<4 || i>7) then
+                // Save registers R1, R2, R4, R5
+                multipush(R1, R2, R4, R5);
+                
+                // Set parameters for MOD_2 call to free the disk block
+                R1 = 4;
+                R3 = currentPID;
+                R2 = [DISK_MAP_TABLE + currentPID*10 + i];
+                call MOD_2;
+                
+                // Restore registers R1, R2, R4, R5
+                multipop(R1, R2, R4, R5);
+            endif;
+            // Mark the disk map table entry as free
+            [DISK_MAP_TABLE + currentPID*10 + i] = -1;
+        endif;
+        i = i + 1;
+    endwhile;
+    return;
 endif;

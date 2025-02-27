@@ -5,7 +5,9 @@ if (functionNumber == 1) then
     // increment wait_mem_count
     [SYSTEM_STATUS_TABLE + 3] = [SYSTEM_STATUS_TABLE + 3] + 1;
 
+    // Wait until a free page is available
     while ([SYSTEM_STATUS_TABLE + 2] == 0) do
+        // Set the process state to WAIT_MEM
         [PROCESS_TABLE + 16 * [SYSTEM_STATUS_TABLE + 1] + 4] = WAIT_MEM;
 
         multipush(R1);
@@ -21,10 +23,12 @@ if (functionNumber == 1) then
     // since available pages for user processes are from 76 to 127
     memoryFreeIndex = 76;
 
+    // Find a free memory page
     while (([MEMORY_FREE_LIST + memoryFreeIndex] > 0) && (memoryFreeIndex < 128)) do
         memoryFreeIndex = memoryFreeIndex + 1;
     endwhile;
 
+    // Mark the page as used
     [MEMORY_FREE_LIST + memoryFreeIndex] = 1;
     
     R0 = memoryFreeIndex;
@@ -38,14 +42,15 @@ if (functionNumber == 2) then
     // decrement num of process using this page
     [MEMORY_FREE_LIST + pageNumber] = [MEMORY_FREE_LIST + pageNumber] - 1;
 
+    // If no process is using this page, increment the memory free count
     if ([MEMORY_FREE_LIST + pageNumber] == 0) then
-        // increment memory free count
         [SYSTEM_STATUS_TABLE + 2] = [SYSTEM_STATUS_TABLE + 2] + 1;
     endif;
 
     alias i R3;
     i = 1;
 
+    // Wake up processes waiting for memory
     while (i < 16) do
         if ([PROCESS_TABLE + 16 * i + 4] == WAIT_MEM) then
             [PROCESS_TABLE + 16 * i + 4] = READY;
@@ -60,6 +65,7 @@ if (functionNumber == 4) then
     alias blockNumber R2;
     alias currentPID R3;
 
+    // Decrement the disk free list count for the block
     [DISK_FREE_LIST + blockNumber] = [DISK_FREE_LIST + blockNumber] - 1;
     return;
 endif;
@@ -72,12 +78,14 @@ if (functionNumber == 5) then
     alias pageNumber R5;
 
     i = 0;
+    // Search for the block number in the disk map table
     while (i < 15) do
         j = 4;
         while (j < 8) do
             if ([DISK_MAP_TABLE + 10 * i + j] == blockNumber) then
                 pageNumber = [PAGE_TABLE_BASE + 20 * i + 8 + 2 * (j - 4)];
                 if (pageNumber != -1) then
+                    // Increment the memory free list count for the page
                     [MEMORY_FREE_LIST + pageNumber] = [MEMORY_FREE_LIST + pageNumber] + 1;
                     R0 = pageNumber;
                     return;
@@ -88,6 +96,7 @@ if (functionNumber == 5) then
         i = i + 1;
     endwhile;
 
+    // If the block number is not found, allocate a new page
     multipush(R1, R2);
     
     R1 = 1;
@@ -99,6 +108,7 @@ if (functionNumber == 5) then
 
     multipush(R1, R2, R5);
 
+    // Map the block to the new page
     R1 = 2;
     R4 = blockNumber;
     R2 = [SYSTEM_STATUS_TABLE + 1];
@@ -111,4 +121,3 @@ if (functionNumber == 5) then
     breakpoint;
     return;
 endif;
-    
