@@ -1,0 +1,20 @@
+load --os $HOME/myexpos/Stage20/startup.xsm
+load --init $HOME/myexpos/Stage20/Assign1/fork.xsm
+load --idle $HOME/myexpos/Stage20/idle.xsm
+load --exec $HOME/myexpos/Stage20/Assign1/even.xsm
+load --exec $HOME/myexpos/Stage20/Assign1/odd.xsm
+load --exhandler $HOME/myexpos/Stage20/except.xsm
+load --int=timer $HOME/myexpos/Stage20/timer.xsm
+load --int=disk $HOME/myexpos/Stage20/diskint.xsm
+load --int=console $HOME/myexpos/Stage20/console.xsm
+load --int=6 $HOME/myexpos/Stage20/int6read.xsm
+load --int=7 $HOME/myexpos/Stage20/int7write.xsm
+load --int=8 $HOME/myexpos/Stage20/int8fork.xsm
+load --int=9 $HOME/myexpos/Stage20/int9exec.xsm
+load --int=10 $HOME/myexpos/Stage20/int10ex.xsm
+load --module 0 $HOME/myexpos/Stage20/mod0rm.xsm
+load --module 1 $HOME/myexpos/Stage20/mod1prm.xsm
+load --module 2 $HOME/myexpos/Stage20/mod2mm.xsm
+load --module 4 $HOME/myexpos/Stage20/mod4dm.xsm
+load --module 5 $HOME/myexpos/Stage20/mod5sc.xsm
+load --module 7 $HOME/myexpos/Stage20/mod7bt.xsm
