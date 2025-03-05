@@ -1,24 +1,25 @@
-load --os $HOME/myexpos/Stage22/startup.xsm
-load --init $HOME/myexpos/Stage22/shellend.xsm
-load --idle $HOME/myexpos/Stage22/idle.xsm
-load --exec $HOME/myexpos/Stage22/even.xsm
-load --exec $HOME/myexpos/Stage22/odd.xsm
-load --exhandler $HOME/myexpos/Stage22/except.xsm
-load --int=timer $HOME/myexpos/Stage22/timer.xsm
-load --int=disk $HOME/myexpos/Stage22/diskint.xsm
-load --int=console $HOME/myexpos/Stage22/console.xsm
-load --int=6 $HOME/myexpos/Stage22/int6read.xsm
-load --int=7 $HOME/myexpos/Stage22/int7write.xsm
-load --int=8 $HOME/myexpos/Stage22/int8fork.xsm
-load --int=9 $HOME/myexpos/Stage22/int9exec.xsm
-load --int=10 $HOME/myexpos/Stage22/int10ex.xsm
-load --int=11 $HOME/myexpos/Stage22/int11sig.xsm
-load --int=13 $HOME/myexpos/Stage22/int13sem.xsm
-load --int=14 $HOME/myexpos/Stage22/int14seml.xsm
-load --int=15 $HOME/myexpos/Stage22/int15end.xsm
-load --module 0 $HOME/myexpos/Stage22/mod0rm.xsm
-load --module 1 $HOME/myexpos/Stage22/mod1prm.xsm
-load --module 2 $HOME/myexpos/Stage22/mod2mm.xsm
-load --module 4 $HOME/myexpos/Stage22/mod4dm.xsm
-load --module 5 $HOME/myexpos/Stage22/mod5sc.xsm
-load --module 7 $HOME/myexpos/Stage22/mod7bt.xsm
+load --os $HOME/myexpos/Stage23/startup.xsm
+load --init $HOME/myexpos/Stage23/shellend.xsm
+load --idle $HOME/myexpos/Stage23/idle.xsm
+load --exec $HOME/myexpos/Stage23/even.xsm
+load --exec $HOME/myexpos/Stage23/odd.xsm
+load --exhandler $HOME/myexpos/Stage23/except.xsm
+load --int=timer $HOME/myexpos/Stage23/timer.xsm
+load --int=disk $HOME/myexpos/Stage23/diskint.xsm
+load --int=console $HOME/myexpos/Stage23/console.xsm
+load --int=4 $HOME/myexpos/Stage23/int4file.xsm
+load --int=6 $HOME/myexpos/Stage23/int6read.xsm
+load --int=7 $HOME/myexpos/Stage23/int7write.xsm
+load --int=8 $HOME/myexpos/Stage23/int8fork.xsm
+load --int=9 $HOME/myexpos/Stage23/int9exec.xsm
+load --int=10 $HOME/myexpos/Stage23/int10ex.xsm
+load --int=11 $HOME/myexpos/Stage23/int11sig.xsm
+load --int=13 $HOME/myexpos/Stage23/int13sem.xsm
+load --int=14 $HOME/myexpos/Stage23/int14seml.xsm
+load --int=15 $HOME/myexpos/Stage23/int15end.xsm
+load --module 0 $HOME/myexpos/Stage23/mod0rm.xsm
+load --module 1 $HOME/myexpos/Stage23/mod1prm.xsm
+load --module 2 $HOME/myexpos/Stage23/mod2mm.xsm
+load --module 4 $HOME/myexpos/Stage23/mod4dm.xsm
+load --module 5 $HOME/myexpos/Stage23/mod5sc.xsm
+load --module 7 $HOME/myexpos/Stage23/mod7bt.xsm

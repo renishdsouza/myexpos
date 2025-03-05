@@ -1,6 +1,0 @@
-load --exec $HOME/myexpos/Stage22/Assign2/parent.xsm
-load --exec $HOME/myexpos/Stage22/Assign2/child.xsm
-load --module 0 $HOME/myexpos/Stage22/mod0rm.xsm
-load --module 2 $HOME/myexpos/Stage22/mod2mm.xsm
-load --module 5 $HOME/myexpos/Stage22/mod5sc.xsm
-load --module 7 $HOME/myexpos/Stage22/mod7bt.xsm
