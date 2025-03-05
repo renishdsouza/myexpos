@@ -53,6 +53,14 @@ loadi(19, 32); // Load INT 8 handler code to memory location 32
 loadi(24, 37); // Load INT 11 handler code to memory location 37
 loadi(25, 38); // Load INT 11 handler code to memory location 38
 
+//loading INT 13
+loadi(28, 41); 
+loadi(29, 42);
+
+//loading INT 14
+loadi(30, 43);
+loadi(31, 44);
+
 // Load INT 15 handler
 loadi(32, 45); // Load INT 15 handler code to memory location 45
 loadi(33, 46); // Load INT 15 handler code to memory location 46
@@ -131,6 +139,14 @@ PTLR = 10;                   // Set Page Table Length Register
 i = 1;
 while (i <= 8) do
 	[([PROCESS_TABLE + 16 + 11] + 1) * 512 - 2 * i] = -1; // Initialize resource table entries
+	i = i + 1;
+endwhile;
+
+// Initialize Semaphore Table
+i=0;
+while(i<32) do
+	[SEMAPHORE_TABLE + 4*i] = -1;
+	[SEMAPHORE_TABLE + 4*i + 1] = 0;
 	i = i + 1;
 endwhile;
 
