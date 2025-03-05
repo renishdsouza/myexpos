@@ -1,0 +1,176 @@
+// This SPL program initializes various modules, interrupt handlers, and system tables for the EXPOS operating system.
+// It sets up the memory free list, page table, process table, and initializes the INIT process and its resources.
+
+// Load exception handler
+loadi(2, 15);  // Load exception handler code to memory location 15
+loadi(3, 16);  // Load exception handler code to memory location 16
+
+// Load timer interrupt handler
+loadi(4, 17);  // Load timer interrupt handler code to memory location 17
+loadi(5, 18);  // Load timer interrupt handler code to memory location 18
+
+// Load scheduler module
+loadi(50, 63); // Load scheduler module code to memory location 63
+loadi(51, 64); // Load scheduler module code to memory location 64
+
+// Load device manager module (MOD 0)
+loadi(40, 53); // Load device manager module code to memory location 53
+loadi(41, 54); // Load device manager module code to memory location 54
+
+// Load terminal write/read module (MOD 0)
+loadi(48, 61); // Load terminal write/read module code to memory location 61
+loadi(49, 62); // Load terminal write/read module code to memory location 62
+
+// Load write interrupt handler
+loadi(16, 29); // Load write interrupt handler code to memory location 29
+loadi(17, 30); // Load write interrupt handler code to memory location 30
+
+// Load console interrupt handler
+loadi(8, 21);  // Load console interrupt handler code to memory location 21
+loadi(9, 22);  // Load console interrupt handler code to memory location 22
+
+// Load disk interrupt handler
+loadi(6, 19);  // Load disk interrupt handler code to memory location 19
+loadi(7, 20);  // Load disk interrupt handler code to memory location 20
+
+// Load read interrupt handler (INT 6)
+loadi(14, 27); // Load read interrupt handler code to memory location 27
+loadi(15, 28); // Load read interrupt handler code to memory location 28
+
+// Load INT 10 handler
+loadi(22, 35); // Load INT 10 handler code to memory location 35
+loadi(23, 36); // Load INT 10 handler code to memory location 36
+
+// Load INT 9 handler
+loadi(20, 33); // Load INT 9 handler code to memory location 33
+loadi(21, 34); // Load INT 9 handler code to memory location 34
+
+// Load INT 8 handler
+loadi(18, 31); // Load INT 8 handler code to memory location 31
+loadi(19, 32); // Load INT 8 handler code to memory location 32
+
+// Load INT 11 handler
+loadi(24, 37); // Load INT 11 handler code to memory location 37
+loadi(25, 38); // Load INT 11 handler code to memory location 38
+
+//loading INT 13
+loadi(28, 41); 
+loadi(29, 42);
+
+//loading INT 14
+loadi(30, 43);
+loadi(31, 44);
+
+// Load INT 15 handler
+loadi(32, 45); // Load INT 15 handler code to memory location 45
+loadi(33, 46); // Load INT 15 handler code to memory location 46
+
+// Load MOD_1
+loadi(42, 55); // Load MOD_1 code to memory location 55
+loadi(43, 56); // Load MOD_1 code to memory location 56
+
+// Load MOD_2
+loadi(44, 57); // Load MOD_2 code to memory location 57
+loadi(45, 58); // Load MOD_2 code to memory location 58
+
+// Load library module
+loadi(63, 13); // Load library module code to memory location 13
+loadi(64, 14); // Load library module code to memory location 14
+
+// Load INIT process
+loadi(65, 7);  // Load INIT process code to memory location 7
+loadi(66, 8);  // Load INIT process code to memory location 8
+
+// Load inode table
+loadi(59, 3);  // Load inode table to memory location 3
+loadi(60, 4);  // Load inode table to memory location 4
+
+// Load disk free list
+loadi(61, 2);  // Load disk free list to memory location 2
+
+// Initialize memory free list
+alias i R0;    // Alias register R0 as i
+i = 0;
+while (i < 128) do
+	if (i < 76) then
+		[MEMORY_FREE_LIST + i] = 1; // Mark memory as free
+	else
+		[MEMORY_FREE_LIST + i] = 0; // Mark memory as reserved
+	endif;
+	i = i + 1;
+endwhile;
+
+[MEMORY_FREE_LIST + 81] = 1; // Mark specific memory locations as free
+[MEMORY_FREE_LIST + 82] = 1;
+
+// Initialize page table
+PTBR = PAGE_TABLE_BASE + 20; // Set Page Table Base Register
+PTLR = 10;                   // Set Page Table Length Register
+
+[PTBR + 0] = 63;  [PTBR + 1] = "0100"; // Page table entries
+[PTBR + 2] = 64;  [PTBR + 3] = "0100";
+[PTBR + 4] = 78;  [PTBR + 5] = "0110";
+[PTBR + 6] = 79;  [PTBR + 7] = "0110";
+[PTBR + 8] = 65;  [PTBR + 9] = "0100";
+[PTBR + 10] = 66; [PTBR + 11] = "0100";
+[PTBR + 12] = -1; [PTBR + 13] = "0000";
+[PTBR + 14] = -1; [PTBR + 15] = "0000";
+[PTBR + 16] = 76; [PTBR + 17] = "0110";
+[PTBR + 18] = 77; [PTBR + 19] = "0110";
+
+// Initialize process table for INIT process
+[PROCESS_TABLE + 16 + 1] = 1;          // Process ID
+[PROCESS_TABLE + 16 + 11] = 80;        // Page table base
+[PROCESS_TABLE + 16 + 12] = 0;         // Process state
+[PROCESS_TABLE + 16 + 13] = 8 * 512;   // Process size
+[PROCESS_TABLE + 16 + 14] = PTBR;      // Page table base register
+[PROCESS_TABLE + 16 + 15] = PTLR;      // Page table length register
+
+[PROCESS_TABLE + 16 + 4] = CREATED;    // Set process state to CREATED
+[76 * 512] = [65 * 512 + 1];           // Initialize process memory
+
+[MEMORY_FREE_LIST + 76] = 1; // Mark memory locations as free
+[MEMORY_FREE_LIST + 77] = 1;
+[MEMORY_FREE_LIST + 78] = 1;
+[MEMORY_FREE_LIST + 79] = 1;
+[MEMORY_FREE_LIST + 80] = 1;
+
+// Initialize per-process resource table
+i = 1;
+while (i <= 8) do
+	[([PROCESS_TABLE + 16 + 11] + 1) * 512 - 2 * i] = -1; // Initialize resource table entries
+	i = i + 1;
+endwhile;
+
+// Initialize Semaphore Table
+i=0;
+while(i<32) do
+	[SEMAPHORE_TABLE + 4*i] = -1;
+	[SEMAPHORE_TABLE + 4*i + 1] = 0;
+	i = i + 1;
+endwhile;
+
+// Initialize disk map table for INIT process
+[DISK_MAP_TABLE + 10 * 1 + 2] = -1; // Disk map table entries
+[DISK_MAP_TABLE + 10 * 1 + 3] = -1;
+[DISK_MAP_TABLE + 10 * 1 + 4] = 7;
+[DISK_MAP_TABLE + 10 * 1 + 5] = 8;
+[DISK_MAP_TABLE + 10 * 1 + 6] = -1;
+[DISK_MAP_TABLE + 10 * 1 + 7] = -1;
+[DISK_MAP_TABLE + 10 * 1 + 8] = -1;
+[DISK_MAP_TABLE + 10 * 1 + 9] = -1;
+
+// Set state of other processes to TERMINATED
+i = 2;
+while (i <= 15) do
+	[PROCESS_TABLE + i * 16 + 4] = TERMINATED; // Set process state to TERMINATED
+	i = i + 1;
+endwhile;
+
+// Initialize system status tables
+[TERMINAL_STATUS_TABLE + 0] = 0; // Terminal status
+[DISK_STATUS_TABLE + 0] = 0;     // Disk status
+[SYSTEM_STATUS_TABLE + 2] = 45;  // System status
+[SYSTEM_STATUS_TABLE + 3] = 0;   // System status
+
+return; // End of program

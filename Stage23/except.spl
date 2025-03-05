@@ -1,0 +1,91 @@
+breakpoint; // Set a breakpoint for debugging
+
+// Set the mode flag in the process table to indicate an exception
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = -1;
+
+// Save the current stack pointer in the process table
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13] = SP;
+
+// Set the stack pointer to the base of the process stack
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 11] * 512 - 1;
+
+backup; // Backup the current state
+
+multipush(EIP); // Save the current instruction pointer
+
+// Check if there is an exception or if the stack pointer is at the end of the process table
+if ((EC != 0) || ([PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13] == (PTLR * 512 - 1))) then
+    // Print the exception code
+    if (EC == 0) then
+        print "0-SO"; // stack overflow
+    endif;
+    if (EC == 1) then
+        print "1-II"; // Invalid Instruction
+    endif;
+    if (EC == 2) then
+        print "2-IMA"; // Invalid Memory Access
+    endif;
+    if (EC == 3) then
+        print "3-AE"; // Arithmetic Exception
+    endif;
+
+    multipush(R0); // Save register R0
+
+    // Terminate the process
+    R1 = 3;
+    R2 = [SYSTEM_STATUS_TABLE + 1];
+    call MOD_1;
+
+    call MOD_5; // Call the module to handle process termination
+
+    multipop(R0); // Restore register R0
+else
+    alias blockNumber R2;
+    // Check if the exception is related to a code page
+    if (EPN > 3 && EPN < 8) then // code page
+        blockNumber = [DISK_MAP_TABLE + [SYSTEM_STATUS_TABLE + 1] * 10 + EPN];
+
+        multipush(R0, R1, R2); // Save registers R0, R1, R2
+        multipush(EPN); // Save the exception page number
+        R1 = 5;
+        R2 = blockNumber;
+        call MOD_2; // Load the code page from disk
+
+        multipop(EPN); // Restore the exception page number
+        [PAGE_TABLE_BASE + [SYSTEM_STATUS_TABLE + 1] * 20 + 2 * EPN] = R0; // Update the page table
+        [PAGE_TABLE_BASE + [SYSTEM_STATUS_TABLE + 1] * 20 + 2 * EPN + 1] = "1100"; // Set the page table entry
+
+        multipop(R0, R1, R2); // Restore registers R0, R1, R2
+    else
+        // Handle heap page exception
+        multipush(R0, R1, R2); // Save registers R0, R1, R2
+
+        R1 = 1;
+        call MOD_2; // Allocate a new heap page
+        [PTBR + 4] = R0; // Update the page table base register
+        [PTBR + 5] = "1110"; // Set the page table entry
+
+        R1 = 1;
+        call MOD_2; // Allocate another heap page
+        [PTBR + 6] = R0; // Update the page table base register
+        [PTBR + 7] = "1110"; // Set the page table entry
+
+        multipop(R0, R1, R2); // Restore registers R0, R1, R2
+    endif;
+endif;
+
+// Reset the mode flag in the process table
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+
+multipop(EIP); // Restore the instruction pointer
+
+restore; // Restore the previous state
+
+// Restore the stack pointer
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13];
+SP = SP + 1;
+
+// Update the page table with the new instruction pointer
+[[PTBR + 2 * (SP / 512)] * 512 + (SP % 512)] = EIP;
+
+ireturn; // Return from the exception handler
