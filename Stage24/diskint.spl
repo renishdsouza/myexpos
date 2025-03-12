@@ -1,25 +1,36 @@
 breakpoint;
 
+// Store user SP to UPTR in process table -> 13th word
 [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13] = SP;
+
+// Set SP to start of Kernel stack
 SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 11] * 512 - 1;
 
 backup;
 
+// Reset the disk status table
 [DISK_STATUS_TABLE] = 0;
 
+// Initialize loop counter
 alias i R2;
 i = 1;
+
+// Loop through process table to find processes waiting for disk
 while (i < 16) do
+    // If process state is WAIT_DISK, set it to READY
     if ([PROCESS_TABLE + i * 16 + 4] == WAIT_DISK) then
         [PROCESS_TABLE + i * 16 + 4] = READY;
     endif;
+    // Increment loop counter
     i = i + 1;
 endwhile;
 
 restore;
 
+// Restore the user stack pointer
 SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13];
 
 breakpoint;
 
+// Return from interrupt
 ireturn;

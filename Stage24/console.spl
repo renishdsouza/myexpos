@@ -1,32 +1,41 @@
-
+// Store user SP to UPTR in process table -> 13th word
 [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13] = SP;
 
+// Set SP to start of Kernel stack
 SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 11] * 512 - 1;
 
 backup;
 
+// Obtain the PID of the process that requested terminal I/O
 alias reqPID R0;
 alias process_table_entry R1;
 
 reqPID = [TERMINAL_STATUS_TABLE + 1];
 process_table_entry = PROCESS_TABLE + reqPID * 16;
 
+// Store the terminal input/output status in the process table
 [process_table_entry + 8] = P0;
 
+// Save the current values of R0 and R1
 multipush(R0, R1);
 
+// Set up arguments for the terminal handler module
 alias arg1 R1;
 alias arg2 R2;
 
 arg1 = 9;
 arg2 = reqPID;
 
+// Call the terminal handler module
 call MOD_0;
 
+// Restore the saved values of R0 and R1
 multipop(R0, R1);
 
 restore;
 
+// Restore the user stack pointer
 SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13];
 
+// Return from interrupt
 ireturn;
