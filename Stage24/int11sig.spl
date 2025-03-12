@@ -1,0 +1,91 @@
+// Aliases for registers
+alias currPID R1;
+alias userSP R2;
+alias syscall R3;
+alias procTab R4;
+
+// Get the current process ID from the system status table
+currPID = [SYSTEM_STATUS_TABLE + 1];
+
+// Calculate the address of the current process's table entry
+procTab = PROCESS_TABLE + currPID*16;
+
+// Save the current stack pointer
+userSP = SP;
+[procTab + 13] = SP;
+
+// Set the stack pointer to the base of the process's stack
+SP = [procTab + 11]*512 -1;
+
+// Retrieve the system call number from the stack
+syscall = [[PTBR + 2*(userSP-5)/512]*512 + (userSP-5)%512];
+[procTab + 9] = syscall;
+
+// Wait System Call (syscall number 13)
+if(syscall == 13) then
+    alias pid R5;
+    // Get the process ID to wait for from the stack
+    pid = [[PTBR + 2*(userSP-4)/512]*512 + (userSP-4)%512];
+    breakpoint;
+    // Check if the process ID is valid and not the current process
+    if(pid == currPID || [PROCESS_TABLE + pid*16 + 4] == TERMINATED || pid<1 || pid>15) then
+        // Return -1 if the process ID is invalid
+        [[PTBR + 2*(userSP-1)/512]*512 + (userSP-1)%512] = -1; 
+        [procTab + 9] = 0;
+        SP = [procTab + 13];
+        ireturn;
+    endif;
+      
+    // Set the current process state to WAIT_PROCESS and save the process ID
+    [procTab + 4] = WAIT_PROCESS;
+    [procTab + 5] = pid;
+      
+    // Save registers and call the scheduler
+    multipush(R1, R2, R3, R4, R5);
+    call MOD_5;
+    multipop(R1, R2, R3, R4, R5);
+    
+    // Return 0 after the wait is over
+    [[PTBR + 2*(userSP-1)/512]*512 + (userSP-1)%512] = 0;
+    [procTab + 9] = 0;
+    SP = [procTab + 13];
+    ireturn;
+endif;
+
+// Signal System Call (syscall number 14)
+if(syscall == 14) then
+    alias i R5;
+    i = 1;
+    // Iterate through the process table to find processes waiting for the current process
+    while (i < 16) do
+        if ([PROCESS_TABLE + i * 16 + 4] == WAIT_PROCESS && [PROCESS_TABLE + i * 16 +5] == [SYSTEM_STATUS_TABLE + 1]) then
+            // Set the state of the waiting process to READY
+            [PROCESS_TABLE + i * 16 + 4] = READY;
+            [PROCESS_TABLE + i * 16 + 5] = -1;
+        endif;
+        i = i + 1;
+    endwhile;
+    // Return 0 after signaling
+    [[PTBR + 2*(userSP-1)/512]*512 + (userSP-1)%512] = 0;
+    [procTab + 9] = 0;
+    SP = [procTab + 13];
+    ireturn;
+endif;
+
+// Getpid System Call (syscall number 11)
+if(syscall == 11) then
+    // Return the current process ID
+    [[PTBR + 2*(userSP-1)/512]*512 + (userSP-1)%512] = currPID;
+    [procTab + 9] = 0;
+    SP = [procTab + 13];
+    ireturn;
+endif;
+
+// Getppid System Call (syscall number 12)
+if(syscall == 12) then
+    // Return the parent process ID
+    [[PTBR + 2*(userSP-1)/512]*512 + (userSP-1)%512] = [procTab + 2];
+    [procTab + 9] = 0;
+    SP = [procTab + 13];
+    ireturn;
+endif;
