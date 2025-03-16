@@ -2,7 +2,7 @@
 alias functionNumber R1;
 alias currentPID R2;
 
-//get pcb
+//Get PCB
 if (functionNumber == 1) then
     alias counter R2;
     counter = 1;
@@ -25,7 +25,7 @@ if (functionNumber == 1) then
     endif;
 endif;
 
-//free user area page
+//Free User Area Page
 if (functionNumber == 2) then 
     breakpoint;
     alias userAreaPage R3;
@@ -61,7 +61,7 @@ if (functionNumber == 2) then
     breakpoint;
 endif;
 
-//exit process
+//Exit Process
 if (functionNumber == 3) then
     multipush(R0, R1, R2);
     functionNumber = 4;
@@ -95,7 +95,7 @@ if (functionNumber == 3) then
     [PROCESS_TABLE + (currentPID*16) + 4] = TERMINATED;
 endif;
 
-//free page table
+//Free Page Table
 if (functionNumber == 4) then 
     [PTBR + 0] = -1;
     [PTBR + 1] = "0000";
@@ -148,5 +148,46 @@ if (functionNumber == 4) then
         counter = counter + 1;
     endwhile;
 endif;
-breakpoint;
+
+//Kill ALl
+if (functionNumber == 5) then
+    alias i R5;
+    i = 0;
+    while (i < MAX_FILE_NUM) do
+        if ([INODE_TABLE + 16 * i + 1] != -1) then
+            multipush(R1, R2, R5);
+            R1 = 4;
+            R3 = currentPID;
+            R2 = i;
+            call RESOURCE_MANAGER;
+            multipop(R1, R2, R5);
+        endif;
+        i = i + 1;
+    endwhile;
+
+    i = 2;
+    while (i < MAX_PROC_NUM - 1) do
+        if ([PROCESS_TABLE + 16 * i + 1] != currentPID && [PROCESS_TABLE + 16 * i + 4] != TERMINATED) then
+            multipush(R1, R2, R5);
+            R1 = 3;
+            R2 = i;
+            call PROCESS_MANAGER;
+            multipop(R1, R2, R5);
+        endif;
+        i = i + 1;
+    endwhile;
+
+    i = 0;
+    while (i < MAX_FILE_NUM) do
+        if ([INODE_TABLE + 16 * i + 1] != -1) then
+            multipush(R1, R2, R5);
+            R1 = 5;
+            R3 = currentPID;
+            R2 = i;
+            call RESOURCE_MANAGER;
+            multipop(R1, R2, R5);
+        endif;
+        i = i + 1;
+    endwhile;
+endif;
 return;
