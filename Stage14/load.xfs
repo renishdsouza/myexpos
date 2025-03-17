@@ -1,4 +1,5 @@
 load --os $HOME/myexpos/Stage14/startup.xsm
+load --library $HOME/myexpos/expl/library.lib
 load --init $HOME/myexpos/Stage14/init.xsm
 load --idle $HOME/myexpos/Stage14/idle.xsm
 load --exec $HOME/myexpos/Stage14/even.xsm

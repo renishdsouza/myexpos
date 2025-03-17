@@ -1,4 +1,5 @@
 load --os $HOME/myexpos/Stage21/startup.xsm
+load --library $HOME/myexpos/expl/library.lib
 load --init $HOME/myexpos/Stage21/Assign1/shellend.xsm
 load --idle $HOME/myexpos/Stage21/idle.xsm
 load --exec $HOME/myexpos/Stage21/Assign1/even.xsm

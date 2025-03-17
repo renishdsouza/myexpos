@@ -1,4 +1,5 @@
 load --os $HOME/myexpos/Stage17/startup.xsm
+load --library $HOME/myexpos/expl/library.lib
 load --init $HOME/myexpos/Stage17/init.xsm
 load --idle $HOME/myexpos/Stage17/idle.xsm
 load --int=6 $HOME/myexpos/Stage17/int6read.xsm
