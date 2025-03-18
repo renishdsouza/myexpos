@@ -90,8 +90,8 @@ int merge(str out, str in1, str in2)
     x=exposcall("Close", fp2);
 
     //Delete the input files
-    x=exposcall("Delete", in1);
-    x=exposcall("Delete", in2);
+    //x=exposcall("Delete", in1);
+    //x=exposcall("Delete", in2);
 
     write("Merged");
     return 0;
