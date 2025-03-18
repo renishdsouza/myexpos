@@ -1,0 +1,32 @@
+// Store user SP to UPTR in process table -> 13th word
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13] = SP;
+
+// Set SP to start of Kernel stack
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 11] * 512 - 1;
+backup;
+
+// Obtaining PID of the currently executing process
+alias currentPID R0;
+currentPID = [SYSTEM_STATUS_TABLE + 1];
+
+// Calculate the address of the process table entry for the current process
+alias process_table_entry R1;
+process_table_entry = PROCESS_TABLE + currentPID * 16;
+
+// Set the process state to READY
+[process_table_entry + 4] = READY;
+
+// Call the scheduler module
+call MOD_5;
+
+restore;
+
+// Restore the user stack pointer
+SP = [PROCESS_TABLE + 16 * [SYSTEM_STATUS_TABLE + 1] + 13];
+
+// Reset the program counter and other necessary fields
+[PROCESS_TABLE + 16 * [SYSTEM_STATUS_TABLE + 1] + 12] = 0;
+[PROCESS_TABLE + 16 * [SYSTEM_STATUS_TABLE + 1] + 9] = 0;
+
+// Return from interrupt
+ireturn;
