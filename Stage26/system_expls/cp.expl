@@ -1,0 +1,37 @@
+int main() {
+    decl 
+        str fileName1, fileName2, fileContent;
+        int temp, status, fileDesc1, fileDesc2;
+    enddecl
+
+    begin 
+        temp = exposcall("Read", -1, fileName1);
+        fileDesc1 = exposcall("Open", fileName1);
+
+        if(fileDesc1 == -1) then
+            temp = exposcall("Write", -2, "File not found");
+        else
+            temp = exposcall("Read", -1, fileName2);
+            fileDesc2 = exposcall("Open", fileName2);
+
+            if(fileDesc2 != -1) then
+                temp = exposcall("Write", -2, "Target Exists");
+            else
+                temp = exposcall("Create", fileName2, 1);
+                fileDesc2 = exposcall("Open", fileName2);
+
+                while (1 == 1) do 
+                    status = exposcall("Read", fileDesc1, fileContent);
+                    if (status == -2) then 
+                        break;
+                    endif;
+
+                    temp = exposcall("Write", fileDesc2, fileContent);
+                endwhile;
+            endif;
+        endif;
+        temp = exposcall("Close", fileDesc1);
+        temp = exposcall("Close", fileDesc2);
+        return 0;
+    end
+}

@@ -1,0 +1,16 @@
+int main(){
+    decl
+        int temp;
+    enddecl
+    begin
+        temp = exposcall("Write",-2,"Comands");
+        temp = exposcall("Write",-2,"Newusr");
+        temp = exposcall("Write",-2,"Setpwd");
+        temp = exposcall("Write",-2,"Getuid");
+        temp = exposcall("Write",-2,"Getuname");
+        temp = exposcall("Write",-2,"Remusr");
+        temp = exposcall("Write",-2,"Shutdown");
+        temp = exposcall("Write",-2,"Logout");
+        return 0;
+    end
+}

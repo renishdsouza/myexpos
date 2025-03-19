@@ -12,7 +12,7 @@ user_id = [SYSTEM_STATUS_TABLE];
 
 SP = [PROCESS_TABLE + 16*pid + 11]*512 - 1;
 
-if(pid != 1 || user_id != 1) then
+if(pid != 2 || user_id != 1) then
     [[PTBR + 2*(user_sp-1)/512]*512 + (user_sp-1)%512] = -1;
     [PROCESS_TABLE + 16*pid + 9] = 0;
     SP = user_sp;
