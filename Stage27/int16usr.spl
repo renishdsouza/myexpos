@@ -1,0 +1,193 @@
+// Save the user stack pointer
+alias userSP R0;
+userSP = SP;
+
+// Retrieve the system call number from the user stack
+alias callNumber R1;
+callNumber = [[PTBR + 2 * (userSP - 5)/512] * 512 + (userSP - 5) % 512];
+
+// Retrieve the username from the user stack
+alias username R2;
+username = [[PTBR + 2 * (userSP - 4) / 512] * 512 + (userSP - 4) % 512];
+
+// Retrieve the return address from the user stack
+alias returnAddress R4;
+returnAddress = [PTBR + 2 * (userSP - 1) / 512] * 512 + (userSP - 1) % 512;
+
+// Set the mode flag in the process table to indicate the system call
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = callNumber;
+
+// Newuser system call
+if (callNumber == 22) then 
+    // Check if the current user is root and the process is the shell
+    if ([SYSTEM_STATUS_TABLE] != ROOT || [SYSTEM_STATUS_TABLE + 1] != 2) then
+        [returnAddress] = -2; // no permission
+    else 
+        // Retrieve the password from the user stack
+        alias password R3;
+        password = [[PTBR + 2 * ((userSP - 3) / 512)] * 512 + (userSP - 3) % 512];
+
+        alias i R5;
+        i = 0;
+
+        // Search for an empty slot or existing username in the user table
+        while (i < MAX_USER_NUM) do
+            if ([USER_TABLE + i * 2 + 0] == username || [USER_TABLE + i * 2 + 0] == -1) then 
+                break;
+            endif;
+            i = i + 1;
+        endwhile;
+
+        // If no empty slot found, return -3
+        if (i == MAX_USER_NUM) then 
+            [returnAddress] = -3;
+        else
+            // If username already exists, return -1
+            if ([USER_TABLE + i * 2 + 0] == username) then
+                [returnAddress] = -1; // user already exists
+            else
+                // Encrypt the password and store the new user in the user table
+                alias encPassword R6;
+                encPassword = password;
+                encrypt encPassword;
+                [USER_TABLE + i * 2 + 0] = username;
+                [USER_TABLE + i * 2 + 1] = encPassword;
+
+                [returnAddress] = 0;
+            endif;
+        endif;
+    endif;
+endif;
+
+// Remuser system call
+if(callNumber == 23) then
+    // Check if the current user is root and the process is the shell
+    if ([SYSTEM_STATUS_TABLE] != ROOT || [SYSTEM_STATUS_TABLE + 1] != 2) then
+        [returnAddress] = -2;
+    else
+        // Check if the username is "kernel" or "root"
+        if (username == "kernel" || username == "root") then
+            [returnAddress] = -2;
+        else
+            alias i R5;
+            i = 0;
+            // Search for the username in the user table
+            while (i < MAX_USER_NUM) do
+                if ([USER_TABLE + i * 2 + 0] == username) then
+                    break;
+                endif;
+                i = i + 1;
+            endwhile;
+
+            // If username not found, return -1
+            if (i == MAX_USER_NUM) then
+                [returnAddress] = -1;
+            else
+                // Check if the user has any files
+                alias userFiles R6;
+                userFiles = 0;
+                while (userFiles < MAX_FILE_NUM) do
+                    if ([ROOT_FILE + userFiles * 8 + 3] == username) then 
+                        break;
+                    endif;
+                    userFiles = userFiles + 1;
+                endwhile;
+
+                // If user has files, return -3
+                if (userFiles != MAX_FILE_NUM) then
+                    [returnAddress] = -3;
+                else
+                    // Remove the user from the user table
+                    [USER_TABLE + i * 2 + 0] = -1;
+                    [USER_TABLE + i * 2 + 1] = -1;
+                    [returnAddress] = 0;
+                endif;
+            endif;
+        endif;
+    endif;
+endif;
+
+// Set password system call
+if (callNumber == 24) then 
+    // Check if the process is the shell
+    if ([SYSTEM_STATUS_TABLE + 1] != 2) then 
+        [returnAddress] = -1;
+    else
+        // Retrieve the password from the user stack
+        alias password R3;
+        password = [[PTBR + 2 * (userSP - 3) / 512] * 512 + (userSP - 3) % 512];
+
+        alias i R5;
+        i = 0;
+        // Search for the username in the user table
+        while (i < MAX_USER_NUM) do
+            if ([USER_TABLE + i * 2 + 0] == username) then
+                break;
+            endif;
+            i = i + 1;
+        endwhile;
+
+        // If username not found, return -2
+        if (i == MAX_USER_NUM) then 
+            [returnAddress] = -2;
+        else
+            // Check if the current user is the same as the username or root
+            if (i != [SYSTEM_STATUS_TABLE] && [SYSTEM_STATUS_TABLE] != ROOT) then
+                [returnAddress] = -1;
+            else
+                // Encrypt the password and update the user table
+                alias encPassword R6;
+                encPassword = password;
+                encrypt encPassword;
+                [USER_TABLE + i * 2 + 1] = encPassword;
+
+                [returnAddress] = 0;
+            endif;
+        endif;
+    endif;
+endif;
+
+// Getuname system call
+if (callNumber == 25) then 
+    alias userID R2;
+
+    // Check if the user ID is valid
+    if (userID < 0 || userID > MAX_USER_NUM) then 
+        [returnAddress] = -1;
+    else
+        // Check if the user ID exists in the user table
+        if ([USER_TABLE + userID * 2 + 0] == -1) then 
+            [returnAddress] = -1;
+        else
+            // Return the username
+            [returnAddress] = [USER_TABLE + userID * 2 + 0];
+        endif;
+    endif;
+endif;
+
+// Getuid system call
+if (callNumber == 26) then
+    alias i R5;
+    i = 0;
+
+    // Search for the username in the user table
+    while (i < MAX_USER_NUM) do
+        if ([USER_TABLE + i * 2 + 0] == username) then 
+            break;
+        endif;
+        i = i + 1;
+    endwhile;
+
+    // If username not found, return -1
+    if (i == MAX_USER_NUM) then   
+        [returnAddress] = -1;
+    else
+        // Return the user ID
+        [returnAddress] = i;
+    endif;
+endif;
+
+// Reset the mode flag in the process table
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+// Return from the interrupt
+ireturn;

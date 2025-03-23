@@ -1,0 +1,50 @@
+// Set the mode flag in the process table to indicate logout
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 28;
+// Save the user stack pointer in the process table
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13] = SP;
+alias userSP R0;
+userSP = SP;
+
+// Switch to the kernel stack
+SP = [PROCESS_TABLE + ([SYSTEM_STATUS_TABLE + 1] * 16) + 11] * 512 - 1;
+
+alias returnAddress R1;
+
+// Retrieve the return address from the user stack
+returnAddress = [PTBR + 2 * ((userSP - 1) / 512)] * 512 + (userSP - 1) % 512;
+
+// Check if the current user is not the root
+if ([SYSTEM_STATUS_TABLE + 1] != 2) then 
+    // If not, return -1
+    [returnAddress] = -1;
+else
+    // Call the process manager to kill all user processes except idle, login, and shell
+    multipush(R0, R1); 
+    R1 = 5;
+    R2 = [SYSTEM_STATUS_TABLE + 1];
+    call PROCESS_MANAGER;
+    multipop(R0, R1);
+
+    // Set the process state to terminated
+    [PROCESS_TABLE + 32 + 4] = TERMINATED;
+    // Update the page table base register
+    [[PTBR + 16] * 512] = [[PTBR + 8] * 512 + 1]; 
+    // Set the process state to ready
+    [PROCESS_TABLE + 16 + 4] = READY;
+    // Reset the user stack pointer
+    [PROCESS_TABLE + 32 + 13] = 8 * 512;
+    // Reset the system status table
+    [SYSTEM_STATUS_TABLE] = 0;
+
+    // Call the scheduler
+    multipush(R0, R1);
+    call SCHEDULER;
+    multipop(R0, R1);
+endif;
+
+// Restore the user stack pointer
+SP = userSP;
+// Reset the mode flag in the process table
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+// Return from the interrupt
+ireturn;
