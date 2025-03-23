@@ -1,41 +1,42 @@
-load --os $HOME/myexpos/Stage26/startup.xsm
+load --os $HOME/myexpos/Stage27/startup.xsm
 load --library $HOME/myexpos/expl/library.lib
-load --init $HOME/myexpos/Stage26/system_expls/login.xsm
-load --idle $HOME/myexpos/Stage26/idle.xsm
-load --shell $HOME/myexpos/Stage26/shell.xsm
-load --exec $HOME/myexpos/Stage26/even.xsm
-load --exec $HOME/myexpos/Stage26/odd.xsm
-load --exec $HOME/myexpos/Stage26/system_expls/cat.xsm
-load --exec $HOME/myexpos/Stage26/system_expls/cp.xsm
-load --exec $HOME/myexpos/Stage26/system_expls/help.xsm
-load --exec $HOME/myexpos/Stage26/system_expls/ls.xsm
-load --exec $HOME/myexpos/Stage26/system_expls/lu.xsm
-load --exec $HOME/myexpos/Stage26/system_expls/rm.xsm
-load --exec $HOME/myexpos/Stage26/system_expls/ru.xsm
-load --data $HOME/myexpos/Stage26/numbers.dat
-load --data $HOME/myexpos/Stage26/sample.dat
-load --exhandler $HOME/myexpos/Stage26/except.xsm
-load --int=timer $HOME/myexpos/Stage26/timer.xsm
-load --int=disk $HOME/myexpos/Stage26/diskint.xsm
-load --int=console $HOME/myexpos/Stage26/console.xsm
-load --int=4 $HOME/myexpos/Stage26/int4file.xsm
-load --int=5 $HOME/myexpos/Stage26/int5fopen.xsm
-load --int=6 $HOME/myexpos/Stage26/int6read.xsm
-load --int=7 $HOME/myexpos/Stage26/int7write.xsm
-load --int=8 $HOME/myexpos/Stage26/int8fork.xsm
-load --int=9 $HOME/myexpos/Stage26/int9exec.xsm
-load --int=10 $HOME/myexpos/Stage26/int10ex.xsm
-load --int=11 $HOME/myexpos/Stage26/int11sig.xsm
-load --int=12 $HOME/myexpos/Stage26/int12logo.xsm
-load --int=13 $HOME/myexpos/Stage26/int13sem.xsm
-load --int=14 $HOME/myexpos/Stage26/int14seml.xsm
-load --int=15 $HOME/myexpos/Stage26/int15end.xsm
-load --int=16 $HOME/myexpos/Stage26/int16usr.xsm
-load --int=17 $HOME/myexpos/Stage26/int17logi.xsm
-load --module 0 $HOME/myexpos/Stage26/mod0rm.xsm
-load --module 1 $HOME/myexpos/Stage26/mod1prm.xsm
-load --module 2 $HOME/myexpos/Stage26/mod2mm.xsm
-load --module 3 $HOME/myexpos/Stage26/mod3fm.xsm
-load --module 4 $HOME/myexpos/Stage26/mod4dm.xsm
-load --module 5 $HOME/myexpos/Stage26/mod5sc.xsm
-load --module 7 $HOME/myexpos/Stage26/mod7bt.xsm
+load --init $HOME/myexpos/Stage27/system_expls/login.xsm
+load --idle $HOME/myexpos/Stage27/idle.xsm
+load --shell $HOME/myexpos/Stage27/shell.xsm
+load --exec $HOME/myexpos/Stage27/even.xsm
+load --exec $HOME/myexpos/Stage27/odd.xsm
+load --exec $HOME/myexpos/Stage27/system_expls/cat.xsm
+load --exec $HOME/myexpos/Stage27/system_expls/cp.xsm
+load --exec $HOME/myexpos/Stage27/system_expls/help.xsm
+load --exec $HOME/myexpos/Stage27/system_expls/ls.xsm
+load --exec $HOME/myexpos/Stage27/system_expls/lu.xsm
+load --exec $HOME/myexpos/Stage27/system_expls/rm.xsm
+load --exec $HOME/myexpos/Stage27/system_expls/ru.xsm
+load --data $HOME/myexpos/Stage27/numbers.dat
+load --data $HOME/myexpos/Stage27/sample.dat
+load --exhandler $HOME/myexpos/Stage27/except.xsm
+load --int=timer $HOME/myexpos/Stage27/timer.xsm
+load --int=disk $HOME/myexpos/Stage27/diskint.xsm
+load --int=console $HOME/myexpos/Stage27/console.xsm
+load --int=4 $HOME/myexpos/Stage27/int4file.xsm
+load --int=5 $HOME/myexpos/Stage27/int5fopen.xsm
+load --int=6 $HOME/myexpos/Stage27/int6read.xsm
+load --int=7 $HOME/myexpos/Stage27/int7write.xsm
+load --int=8 $HOME/myexpos/Stage27/int8fork.xsm
+load --int=9 $HOME/myexpos/Stage27/int9exec.xsm
+load --int=10 $HOME/myexpos/Stage27/int10ex.xsm
+load --int=11 $HOME/myexpos/Stage27/int11sig.xsm
+load --int=12 $HOME/myexpos/Stage27/int12logo.xsm
+load --int=13 $HOME/myexpos/Stage27/int13sem.xsm
+load --int=14 $HOME/myexpos/Stage27/int14seml.xsm
+load --int=15 $HOME/myexpos/Stage27/int15end.xsm
+load --int=16 $HOME/myexpos/Stage27/int16usr.xsm
+load --int=17 $HOME/myexpos/Stage27/int17logi.xsm
+load --module 0 $HOME/myexpos/Stage27/mod0rm.xsm
+load --module 1 $HOME/myexpos/Stage27/mod1prm.xsm
+load --module 2 $HOME/myexpos/Stage27/mod2mm.xsm
+load --module 3 $HOME/myexpos/Stage27/mod3fm.xsm
+load --module 4 $HOME/myexpos/Stage27/mod4dm.xsm
+load --module 5 $HOME/myexpos/Stage27/mod5sc.xsm
+load --module 7 $HOME/myexpos/Stage27/mod6pgm.xsm
+load --module 7 $HOME/myexpos/Stage27/mod7bt.xsm

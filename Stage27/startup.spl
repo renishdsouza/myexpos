@@ -1,63 +1,109 @@
 // module 7
-loadi(54, 67);
-loadi(55, 68);
+loadi(54, 67); // Load module 7 part 1
+loadi(55, 68); // Load module 7 part 2
 
 // idle code
-loadi(69, 11);
+loadi(69, 11); // Load idle code
 
 // scheduler(module 5)
-loadi(50, 63);
-loadi(51, 64);
+loadi(50, 63); // Load scheduler part 1
+loadi(51, 64); // Load scheduler part 2
 
-SP = 82 * 512 - 1;
+SP = 82 * 512 - 1; // Set stack pointer
 
-call BOOT_MODULE;
+call BOOT_MODULE; // Call boot module
 
-PTBR = PAGE_TABLE_BASE;
-PTLR = 10;
+// IDLE
+PTBR = PAGE_TABLE_BASE; // Set Page Table Base Register for IDLE process
+PTLR = 10; // Set Page Table Length Register for IDLE process
 
 // Library
-[PTBR + 0] = -1;
-[PTBR + 1] = "0000";
-[PTBR + 2] = -1;
-[PTBR + 3] = "0000";
+[PTBR + 0] = -1; // Unused page table entry
+[PTBR + 1] = "0000"; // Unused page table entry
+[PTBR + 2] = -1; // Unused page table entry
+[PTBR + 3] = "0000"; // Unused page table entry
 
 // Heap
-[PTBR + 4] = -1;
-[PTBR + 5] = "0000";
-[PTBR + 6] = -1;
-[PTBR + 7] = "0000";
+[PTBR + 4] = -1; // Unused page table entry
+[PTBR + 5] = "0000"; // Unused page table entry
+[PTBR + 6] = -1; // Unused page table entry
+[PTBR + 7] = "0000"; // Unused page table entry
 
 // Code
-[PTBR + 8] = 69;
-[PTBR + 9] = "0100";
-[PTBR + 10] = -1;
-[PTBR + 11] = "0000";
-[PTBR + 12] = -1;
-[PTBR + 13] = "0000";
-[PTBR + 14] = -1;
-[PTBR + 15] = "0000";
+[PTBR + 8] = 69; // Page table entry for idle code
+[PTBR + 9] = "0100"; // Page table entry for idle code
+[PTBR + 10] = -1; // Unused page table entry
+[PTBR + 11] = "0000"; // Unused page table entry
+[PTBR + 12] = -1; // Unused page table entry
+[PTBR + 13] = "0000"; // Unused page table entry
+[PTBR + 14] = -1; // Unused page table entry
+[PTBR + 15] = "0000"; // Unused page table entry
 
 // Stack
-[PTBR + 16] = 70;
-[PTBR + 17] = "0110";
-[PTBR + 18] = -1;
-[PTBR + 19] = "0000";
+[PTBR + 16] = 70; // Page table entry for stack
+[PTBR + 17] = "0110"; // Page table entry for stack
+[PTBR + 18] = -1; // Unused page table entry
+[PTBR + 19] = "0000"; // Unused page table entry
 
-[70 * 512] = [69 * 512 + 1];
+[70 * 512] = [69 * 512 + 1]; // Copy idle code to memory
 
-// setting up process table for IDLE
-[PROCESS_TABLE + 1] = 0; // process id of IDLE is 0
-[PROCESS_TABLE + 3] = 0; // userid of kernel
-[PROCESS_TABLE + 4] = RUNNING;
-[PROCESS_TABLE + 11] = 76;
-[PROCESS_TABLE + 13] = 8 * 512;
-[PROCESS_TABLE + 12] = 0;
-[PROCESS_TABLE + 14] = PAGE_TABLE_BASE;
-[PROCESS_TABLE + 15] = 10;
+[PROCESS_TABLE + 1] = 0; // tick
+[PROCESS_TABLE + 3] = 0; // process id of IDLE
+[PROCESS_TABLE + 4] = RUNNING; // process state
+[PROCESS_TABLE + 11] = 76; // first available free page
+[PROCESS_TABLE + 13] = 8 * 512; // stack pointer
+[PROCESS_TABLE + 12] = 0; // priority
+[PROCESS_TABLE + 14] = PAGE_TABLE_BASE; // page table base register
+[PROCESS_TABLE + 15] = 10; // page table length register
 
-[SYSTEM_STATUS_TABLE + 1] = 0;
+[SYSTEM_STATUS_TABLE + 1] = 0; // Set current process id to 0 (IDLE)
+SP = 8 * 512; // Set stack pointer
 
-SP = 8 * 512;
+// SWAPPER DAEMON
+PTBR = PAGE_TABLE_BASE + 15 * 20; // Set Page Table Base Register for SWAPPER DAEMON process
+PTLR = 10; // Set Page Table Length Register for SWAPPER DAEMON process
 
-ireturn;
+// Library
+[PTBR + 0] = -1; // Unused page table entry
+[PTBR + 1] = "0000"; // Unused page table entry
+[PTBR + 2] = -1; // Unused page table entry
+[PTBR + 3] = "0000"; // Unused page table entry
+
+// Heap
+[PTBR + 4] = -1; // Unused page table entry
+[PTBR + 5] = "0000"; // Unused page table entry
+[PTBR + 6] = -1; // Unused page table entry
+[PTBR + 7] = "0000"; // Unused page table entry
+
+// Code (same as IDLE)
+[PTBR + 8] = 69; // Page table entry for idle code
+[PTBR + 9] = "0100"; // Page table entry for idle code
+[PTBR + 10] = -1; // Unused page table entry
+[PTBR + 11] = "0000"; // Unused page table entry
+[PTBR + 12] = -1; // Unused page table entry
+[PTBR + 13] = "0000"; // Unused page table entry
+[PTBR + 14] = -1; // Unused page table entry
+[PTBR + 15] = "0000"; // Unused page table entry
+
+// Stack
+[PTBR + 16] = 81; // Page table entry for stack
+[PTBR + 17] = "0110"; // Page table entry for stack
+[PTBR + 18] = -1; // Unused page table entry
+[PTBR + 19] = "0000"; // Unused page table entry
+
+[81 * 512] = [69 * 512 + 1]; // Copy idle code to memory
+SP = 8 * 512; // Set stack pointer
+
+[PROCESS_TABLE + 15 * 16 + 0] = 0; // tick
+[PROCESS_TABLE + 15 * 16 + 1] = 15; // process id of SWAPPER DAEMON
+[PROCESS_TABLE + 15 * 16 + 4] = CREATED; // process state
+[PROCESS_TABLE + 15 * 16 + 11] = 82; // first available free page
+[PROCESS_TABLE + 15 * 16 + 12] = 0; // priority
+[PROCESS_TABLE + 15 * 16 + 13] = 8 * 512; // stack pointer
+[PROCESS_TABLE + 15 * 16 + 14] = PTBR; // page table base register
+[PROCESS_TABLE + 15 * 16 + 15] = 10; // page table length register
+
+PTBR = PAGE_TABLE_BASE; // Reset Page Table Base Register
+PTLR = 10; // Reset Page Table Length Register
+
+ireturn; // Return from interrupt

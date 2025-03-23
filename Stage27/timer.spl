@@ -1,32 +1,61 @@
-// Store user SP to UPTR in process table -> 13th word
+// Save the current stack pointer of the running process
 [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13] = SP;
 
-// Set SP to start of Kernel stack
+// Set the stack pointer to the process's stack base
 SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 11] * 512 - 1;
+
+// Backup the current context
 backup;
 
-// Obtaining PID of the currently executing process
-alias currentPID R0;
-currentPID = [SYSTEM_STATUS_TABLE + 1];
+if ([SYSTEM_STATUS_TABLE + 5] != 0) then // Check if there is a pending swap operation
+    if ([SYSTEM_STATUS_TABLE + 1] == SWAPPER_DAEMON) then // If the current process is the swapper daemon
+        R1 = [SYSTEM_STATUS_TABLE + 5]; // Set the swap operation type
+        R2 = [SYSTEM_STATUS_TABLE + 1]; // Set the current process ID
+        call PAGER_MODULE; // Call the pager module to handle the swap operation
+    endif;
+else
+    if ([SYSTEM_STATUS_TABLE + 2] < MEM_LOW) then // Check if memory is below the low threshold
+        [SYSTEM_STATUS_TABLE + 5] = SWAP_OUT; // Set the swap operation to SWAP_OUT
+    else
+        if ([SYSTEM_STATUS_TABLE + 4] > 0) then // Check if there are any swapped out processes
+            if ([SYSTEM_STATUS_TABLE + 2] > MEM_HIGH) then // Check if memory is above the high threshold
+                [SYSTEM_STATUS_TABLE + 5] = SWAP_IN; // Set the swap operation to SWAP_IN
+            else
+                alias i R0;
+                i = 0;
+                while (i < MAX_PROC_NUM) do // Loop through the process table
+                    if ([PROCESS_TABLE + i * 16 + 6] == 1 && [PROCESS_TABLE + i * 16 + 0] > MAX_TICK) then // Check if the process is swapped out and has the highest tick value
+                        [SYSTEM_STATUS_TABLE + 5] = SWAP_IN; // Set the swap operation to SWAP_IN
+                        break;
+                    endif;
+                    i = i + 1;
+                endwhile;
+            endif;
+        endif;
+    endif;
+endif;
 
-// Calculate the address of the process table entry for the current process
-alias process_table_entry R1;
-process_table_entry = PROCESS_TABLE + currentPID * 16;
+// Set the current process state to READY
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 4] = READY; 
 
-// Set the process state to READY
-[process_table_entry + 4] = READY;
+// Increment tick values for all processes
+alias i R0;
+i = 0; 
+while (i < MAX_PROC_NUM) do
+    [PROCESS_TABLE + i * 16] = [PROCESS_TABLE + i * 16] + 1; 
+    i = i + 1;
+endwhile;
 
-// Call the scheduler module
+// Call the scheduler
 call MOD_5;
 
+// Restore the context of the new process
 restore;
 
-// Restore the user stack pointer
+// Set the stack pointer to the new process's stack pointer
 SP = [PROCESS_TABLE + 16 * [SYSTEM_STATUS_TABLE + 1] + 13];
+[PROCESS_TABLE + 16 * [SYSTEM_STATUS_TABLE + 1] + 12] = 0; // Reset the stack pointer offset
+[PROCESS_TABLE + 16 * [SYSTEM_STATUS_TABLE + 1] + 9] = 0; // Reset the mode flag
 
-// Reset the program counter and other necessary fields
-[PROCESS_TABLE + 16 * [SYSTEM_STATUS_TABLE + 1] + 12] = 0;
-[PROCESS_TABLE + 16 * [SYSTEM_STATUS_TABLE + 1] + 9] = 0;
-
-// Return from interrupt
+// Return from the timer interrupt
 ireturn;

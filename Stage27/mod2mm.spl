@@ -5,11 +5,12 @@ if (functionNumber == 1) then
     // increment wait_mem_count
     [SYSTEM_STATUS_TABLE + 3] = [SYSTEM_STATUS_TABLE + 3] + 1;
 
+    // Wait until a free page is available
     while ([SYSTEM_STATUS_TABLE + 2] == 0) do
         [PROCESS_TABLE + 16 * [SYSTEM_STATUS_TABLE + 1] + 4] = WAIT_MEM;
 
         multipush(R1);
-        call MOD_5;
+        call MOD_5; // Call the scheduler
         multipop(R1);
     endwhile;
 
@@ -19,13 +20,14 @@ if (functionNumber == 1) then
     alias memoryFreeIndex R2;
     memoryFreeIndex = 76;
 
+    // Find the first free page in the memory free list
     while (([MEMORY_FREE_LIST + memoryFreeIndex] > 0) && (memoryFreeIndex < 128)) do
         memoryFreeIndex = memoryFreeIndex + 1;
     endwhile;
 
     [MEMORY_FREE_LIST + memoryFreeIndex] = 1;
     
-    R0 = memoryFreeIndex;
+    R0 = memoryFreeIndex; // Return the free page number
     return;
 endif;
 
@@ -35,12 +37,14 @@ if (functionNumber == 2) then
 
     [MEMORY_FREE_LIST + pageNumber] = [MEMORY_FREE_LIST + pageNumber] - 1;
 
+    // If the page is completely free, increment the free page count
     if ([MEMORY_FREE_LIST + pageNumber] == 0) then
         [SYSTEM_STATUS_TABLE + 2] = [SYSTEM_STATUS_TABLE + 2] + 1;
     endif;
 
     alias i R3;
     i = 1;
+    // Wake up processes waiting for memory
     while (i < 16) do
         if ([PROCESS_TABLE + 16 * i + 4] == WAIT_MEM) then
             [PROCESS_TABLE + 16 * i + 4] = READY;
@@ -54,6 +58,7 @@ endif;
 if (functionNumber == 3) then
     alias i R2;
     i = DISK_FREE_AREA;
+    // Find the first free block in the disk free list
     while (i < DISK_SWAP_AREA) do
         if ([DISK_FREE_LIST + i] == 0) then
             [DISK_FREE_LIST + i] = 1;
@@ -62,10 +67,10 @@ if (functionNumber == 3) then
         i = i + 1;
     endwhile;
     if (i == DISK_SWAP_AREA) then
-        R0 = -1;
+        R0 = -1; // No free block found
         return;
     endif;
-    R0 = i;
+    R0 = i; // Return the free block number
     return;
 endif;
 
@@ -86,6 +91,7 @@ if (functionNumber == 5) then
     alias pageNumber R5;
 
     i = 0;
+    // Search for the code page in the disk map table
     while (i < 15) do
         j = 4;
         while (j < 8) do
@@ -93,7 +99,7 @@ if (functionNumber == 5) then
                 pageNumber = [PAGE_TABLE_BASE + 20 * i + 8 + 2 * (j - 4)];
                 if (pageNumber != -1) then
                     [MEMORY_FREE_LIST + pageNumber] = [MEMORY_FREE_LIST + pageNumber] + 1;
-                    R0 = pageNumber;
+                    R0 = pageNumber; // Return the page number
                     return;
                 endif;
             endif;
@@ -105,7 +111,7 @@ if (functionNumber == 5) then
     multipush(R1, R2);
     
     R1 = 1;
-    call MOD_2;
+    call MOD_2; // Get a free page
 
     pageNumber = R0;
 
@@ -117,11 +123,31 @@ if (functionNumber == 5) then
     R4 = blockNumber;
     R2 = [SYSTEM_STATUS_TABLE + 1];
     R3 = pageNumber;
-    call MOD_4;
+    call MOD_4; // Load the code page into memory
 
     multipop(R1, R2, R5);
 
-    R0 = pageNumber;
+    R0 = pageNumber; // Return the page number
     breakpoint;
+    return;
+endif;
+
+// Get Swap Block
+if (functionNumber == 6) then 
+    alias i R2;
+    i = DISK_SWAP_AREA;
+    // Find the first free block in the swap area
+    while (i < DISK_SIZE) do
+        if ([DISK_FREE_LIST + i] == 0) then 
+            break;
+        endif;
+        i = i+1;
+    endwhile;
+    if (i == DISK_SIZE) then
+        R0 = -1; // No free block found
+    else
+        [DISK_FREE_LIST + i] = 1;
+        R0 = i; // Return the free block number
+    endif;
     return;
 endif;

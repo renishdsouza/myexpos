@@ -1,280 +1,281 @@
-// init/login code file
-loadi(65, 7);
+// init
+loadi(65, 7); // Load the init program into memory
 
-// SHELL process
-loadi(67, 9);
-loadi(68, 10);
+// shell
+loadi(67, 9); // Load the shell program into memory
+loadi(68, 10); // Load the shell program into memory
 
 // library
-loadi(63, 13);
-loadi(64, 14);
+loadi(63, 13); // Load the library into memory
+loadi(64, 14); // Load the library into memory
 
 // exception handler
-loadi(2, 15);
-loadi(3, 16);
+loadi(2, 15); // Load the exception handler into memory
+loadi(3, 16); // Load the exception handler into memory
 
 // timer interrupt
-loadi(4, 17);
-loadi(5, 18);
+loadi(4, 17); // Load the timer interrupt handler into memory
+loadi(5, 18); // Load the timer interrupt handler into memory
 
-// console-interrupt-handler
-loadi(8,21);
-loadi(9,22);
+// console interrupt
+loadi(8,21); // Load the console interrupt handler into memory
+loadi(9,22); // Load the console interrupt handler into memory
 
-// DISK interrupt
-loadi(6, 19);
-loadi(7, 20);
+// disk interrupt
+loadi(6, 19); // Load the disk interrupt handler into memory
+loadi(7, 20); // Load the disk interrupt handler into memory
 
 // int4
-loadi(10, 23);
-loadi(11, 24);
+loadi(10, 23); // Load interrupt 4 handler into memory
+loadi(11, 24); // Load interrupt 4 handler into memory
 
 // int5
-loadi(12, 25);
-loadi(13, 26);
+loadi(12, 25); // Load interrupt 5 handler into memory
+loadi(13, 26); // Load interrupt 5 handler into memory
 
 // int6
-loadi(14, 27);
-loadi(15, 28);
+loadi(14, 27); // Load interrupt 6 handler into memory
+loadi(15, 28); // Load interrupt 6 handler into memory
 
 // int7
-loadi(16, 29);
-loadi(17, 30);
+loadi(16, 29); // Load interrupt 7 handler into memory
+loadi(17, 30); // Load interrupt 7 handler into memory
 
-// INT_8
-loadi(18,31);
-loadi(19,32);
+// int8
+loadi(18,31); // Load interrupt 8 handler into memory
+loadi(19,32); // Load interrupt 8 handler into memory
 
-// INT_9 
-loadi(20,33);
-loadi(21,34);
+// int9 
+loadi(20,33); // Load interrupt 9 handler into memory
+loadi(21,34); // Load interrupt 9 handler into memory
 
-// INT_10
-loadi(22, 35);
-loadi(23, 36);
+// int10
+loadi(22, 35); // Load interrupt 10 handler into memory
+loadi(23, 36); // Load interrupt 10 handler into memory
 
-// INT_11
-loadi(24, 37);
-loadi(25, 38);
+// int11
+loadi(24, 37); // Load interrupt 11 handler into memory
+loadi(25, 38); // Load interrupt 11 handler into memory
 
-// INT_12
-loadi(26, 39);
-loadi(27, 40);
+// int12
+loadi(26, 39); // Load interrupt 12 handler into memory
+loadi(27, 40); // Load interrupt 12 handler into memory
 
-// INT_13
-loadi(28, 41);
-loadi(29, 42);
+// int13
+loadi(28, 41); // Load interrupt 13 handler into memory
+loadi(29, 42); // Load interrupt 13 handler into memory
 
-// INT_14
-loadi(30, 43);
-loadi(31, 44);
+// int14
+loadi(30, 43); // Load interrupt 14 handler into memory
+loadi(31, 44); // Load interrupt 14 handler into memory
 
-// INT_15
-loadi(32, 45);
-loadi(33, 46);
+// int15
+loadi(32, 45); // Load interrupt 15 handler into memory
+loadi(33, 46); // Load interrupt 15 handler into memory
 
-// INT_16
-loadi(34, 47);
-loadi(35, 48);
+// int16
+loadi(34, 47); // Load interrupt 16 handler into memory
+loadi(35, 48); // Load interrupt 16 handler into memory
 
-// INT_17
-loadi(36, 49);
-loadi(37, 50);
+// int17
+loadi(36, 49); // Load interrupt 17 handler into memory
+loadi(37, 50); // Load interrupt 17 handler into memory
 
 // module 0
-loadi(40, 53);
-loadi(41, 54);
+loadi(40, 53); // Load module 0 into memory
+loadi(41, 54); // Load module 0 into memory
 
 // module 1
-loadi(42, 55);
-loadi(43, 56);
+loadi(42, 55); // Load module 1 into memory
+loadi(43, 56); // Load module 1 into memory
 
 // module 2
-loadi(44, 57);
-loadi(45, 58);
+loadi(44, 57); // Load module 2 into memory
+loadi(45, 58); // Load module 2 into memory
 
 // module 3
-loadi(46, 59);
-loadi(47, 60);
+loadi(46, 59); // Load module 3 into memory
+loadi(47, 60); // Load module 3 into memory
 
 // module 4
-loadi(48, 61);
-loadi(49, 62);
+loadi(48, 61); // Load module 4 into memory
+loadi(49, 62); // Load module 4 into memory
+
+// module  6
+loadi(52, 65); // Load module 6 into memory
+loadi(53, 66); // Load module 6 into memory
 
 // inode table
-loadi(59, 3);
-loadi(60, 4);
+loadi(59, 3); // Load inode table into memory
+loadi(60, 4); // Load inode table into memory
 
 // DISK_FREE_LIST
-loadi(61, 2);
+loadi(61, 2); // Load disk free list into memory
 
 // root file
-loadi(62, 5);
+loadi(62, 5); // Load root file into memory
 
-PTBR = PAGE_TABLE_BASE + 20;
-PTLR = 10;
+PTBR = PAGE_TABLE_BASE + 20; // Set Page Table Base Register for init process
+PTLR = 10; // Set Page Table Length Register for init process
 
-[PTBR + 0] = 63;
-[PTBR + 1] = "0100";
-[PTBR + 2] = 64;
-[PTBR + 3] = "0100";
-[PTBR + 4] = -1;
-[PTBR + 5] = "0000";
-[PTBR + 6] = -1;
-[PTBR + 7] = "0000";
-[PTBR + 8] = 65;
-[PTBR + 9] = "0100";
-[PTBR + 10] = -1;
-[PTBR + 11] = "0000";
-[PTBR + 12] = -1;
-[PTBR + 13] = "0000";
-[PTBR + 14] = -1;
-[PTBR + 15] = "0000";
-[PTBR + 16] = 66;
-[PTBR + 17] = "0110";
-[PTBR + 18] = -1;
-[PTBR + 19] = "0000";
+[PTBR + 0] = 63; // Page table entry for library
+[PTBR + 1] = "0100"; // Page table entry for library
+[PTBR + 2] = 64; // Page table entry for library
+[PTBR + 3] = "0100"; // Page table entry for library
+[PTBR + 4] = -1; // Unused page table entry
+[PTBR + 5] = "0000"; // Unused page table entry
+[PTBR + 6] = -1; // Unused page table entry
+[PTBR + 7] = "0000"; // Unused page table entry
+[PTBR + 8] = 65; // Page table entry for init program
+[PTBR + 9] = "0100"; // Page table entry for init program
+[PTBR + 10] = -1; // Unused page table entry
+[PTBR + 11] = "0000"; // Unused page table entry
+[PTBR + 12] = -1; // Unused page table entry
+[PTBR + 13] = "0000"; // Unused page table entry
+[PTBR + 14] = -1; // Unused page table entry
+[PTBR + 15] = "0000"; // Unused page table entry
+[PTBR + 16] = 66; // Page table entry for init program
+[PTBR + 17] = "0110"; // Page table entry for init program
+[PTBR + 18] = -1; // Unused page table entry
+[PTBR + 19] = "0000"; // Unused page table entry
 
-[66 * 512] = [65 * 512 + 1];
+[66 * 512] = [65 * 512 + 1]; // Copy init program to memory
 
-alias processTable R1;
-processTable = PROCESS_TABLE + 16;
+alias processTable R1; // Alias for process table
+processTable = PROCESS_TABLE + 16; // Set process table for init process
 
-[processTable + 1] = 1;
-[processTable + 3] = 0; // userid of root
-[processTable + 4] = CREATED;
-[processTable + 11] = 77;
-[processTable + 12] = 0;
-[processTable + 13] = 8 * 512;
-[processTable + 14] = PTBR;
-[processTable + 15] = PTLR;
+[processTable + 0] = 0; // tick
+[processTable + 1] = 1; // process id of init
+[processTable + 3] = 1; // userid of root
+[processTable + 4] = CREATED; // process state
+[processTable + 11] = 77; // first available free page
+[processTable + 12] = 0; // priority
+[processTable + 13] = 8 * 512; // stack pointer
+[processTable + 14] = PTBR; // page table base register
+[processTable + 15] = PTLR; // page table length register
 
-alias i R0;
+alias i R0; // Alias for index variable
 
 // memory free list initialization
 i = 0;
 while (i < 128) do
-    if (i < 78) then
-        [MEMORY_FREE_LIST  + i] = 1;
+    if (i < 83) then
+        [MEMORY_FREE_LIST  + i] = 1; // Mark memory as free
     else
-        [MEMORY_FREE_LIST + i] = 0;
+        [MEMORY_FREE_LIST + i] = 0; // Mark memory as reserved
     endif;
     i = i + 1;
 endwhile;
 
 // per-process resource table for init
-i = 512 - 16;
-while (i < 512) do
-    [[processTable + 11] * 512 + i] = -1;
-    i = i + 1;
+alias resourceTable R2; // Alias for resource table
+resourceTable = [processTable + 11] * 512 + RESOURCE_TABLE_OFFSET; // Set resource table for init process
+i = 0;
+while (i < 16) do
+    [resourceTable + i] = -1; // Initialize resource table
+    i = i + 2;
 endwhile;
 
-// initialization of semaphore table
+// initialization of semaphore table & open file table
 i = 0;
 while (i < MAX_SEM_COUNT) do
-    [SEMAPHORE_TABLE + i * 4] = -1;
-    [SEMAPHORE_TABLE + i * 4 + 1] = 0;
+    [SEMAPHORE_TABLE + i * 4] = -1; // Initialize semaphore table
+    [SEMAPHORE_TABLE + i * 4 + 1] = 0; // Initialize semaphore table
+
+    [OPEN_FILE_TABLE + i * 4 + 0] = -1; // Initialize open file table
+    [OPEN_FILE_TABLE + i * 4 + 1] = 0; // Initialize open file table
+
     i = i + 1;
 endwhile;
 
 // initialization of file status table
 i = 0;
 while (i < MAX_FILE_NUM) do
-    [FILE_STATUS_TABLE + i * 4 + 0] = -1;
-    [FILE_STATUS_TABLE + i * 4 + 1] = -1;
+    [FILE_STATUS_TABLE + i * 4 + 0] = -1; // Initialize file status table
+    [FILE_STATUS_TABLE + i * 4 + 1] = -1; // Initialize file status table
     i = i + 1;
 endwhile;
 
 // initialization of buffer table
 i = 0;
 while (i < MAX_BUFFER) do
-    [BUFFER_TABLE + i * 4 + 0] = -1;
-    [BUFFER_TABLE + i * 4 + 1] = 0;
-    [BUFFER_TABLE + i * 4 + 2] = -1;
+    [BUFFER_TABLE + i * 4 + 0] = -1; // Initialize buffer table
+    [BUFFER_TABLE + i * 4 + 1] = 0; // Initialize buffer table
+    [BUFFER_TABLE + i * 4 + 2] = -1; // Initialize buffer table
     i = i + 1;
 endwhile;
 
-// initialization of open file table
-i = 0;
-while (i < MAX_OPENFILE_NUM) do
-    [OPEN_FILE_TABLE + i * 4 + 0] = -1;
-    [OPEN_FILE_TABLE + i * 4 + 1] = 0;
-    i = i + 1;
-endwhile;
+// SHELL //
 
+PTBR = PAGE_TABLE_BASE + 40; // Set Page Table Base Register for shell process
+PTLR = 10; // Set Page Table Length Register for shell process
 
-//SHELL
+[PTBR + 0] = 63; // Page table entry for library
+[PTBR + 1] = "0100"; // Page table entry for library
+[PTBR + 2] = 64; // Page table entry for library
+[PTBR + 3] = "0100"; // Page table entry for library
 
-PTBR = PAGE_TABLE_BASE + 40;
-PTLR = 10;
+[PTBR + 4] = -1; // Unused page table entry
+[PTBR + 5] = "0000"; // Unused page table entry
+[PTBR + 6] = -1; // Unused page table entry
+[PTBR + 7] = "0000"; // Unused page table entry
 
-[PTBR + 0] = 63;
-[PTBR + 1] = "0100";
-[PTBR + 2] = 64;
-[PTBR + 3] = "0100";
+[PTBR + 8] = 67; // Page table entry for shell program
+[PTBR + 9] = "0100"; // Page table entry for shell program
+[PTBR + 10] = 68; // Page table entry for shell program
+[PTBR + 11] = "0100"; // Page table entry for shell program
 
-[PTBR + 4] = -1;
-[PTBR + 5] = "0000";
-[PTBR + 6] = -1;
-[PTBR + 7] = "0000";
+[PTBR + 12] = -1; // Unused page table entry
+[PTBR + 13] = "0000"; // Unused page table entry
+[PTBR + 14] = -1; // Unused page table entry
+[PTBR + 15] = "0000"; // Unused page table entry
 
-[PTBR + 8] = 67;
-[PTBR + 9] = "0100";
-[PTBR + 10] = 68;
-[PTBR + 11] = "0100";
+[PTBR + 16] = 78; // Page table entry for shell program
+[PTBR + 17] = "0110"; // Page table entry for shell program
+[PTBR + 18] = 79; // Page table entry for shell program
+[PTBR + 19] = "0110"; // Page table entry for shell program
 
-[PTBR + 12] = -1;
-[PTBR + 13] = "0000";
-[PTBR + 14] = -1;
-[PTBR + 15] = "0000";
+[78 * 512] = [67 * 512 + 1]; // Copy shell program to memory
 
-[PTBR + 16] = 78;
-[PTBR + 17] = "0110";
-[PTBR + 18] = 79;
-[PTBR + 19] = "0110";
+processTable = PROCESS_TABLE + 32; // Set process table for shell process
 
-[78*512] = [67*512 + 1];
-
-processTable = PROCESS_TABLE + 32;
-
-[processTable + 1] = 2; 
-[processTable + 2] = 1; 
-[processTable + 4] = TERMINATED;
-[processTable + 11] = 80; 
-[processTable + 12] = 0;
-[processTable + 13] = 8*512;
-[processTable + 14] = PAGE_TABLE_BASE + 40;
-[processTable + 15] = 10;
+[processTable + 0] = 0; // tick
+[processTable + 1] = 2; // process id of SHELL is 1
+[processTable + 2] = 1; // parent id of SHELL is 1
+[processTable + 4] = TERMINATED; // process state
+[processTable + 11] = 80; // first available free page is 80 (0 - 79 are system reserved)
+[processTable + 12] = 0; // priority
+[processTable + 13] = 8*512; // stack pointer
+[processTable + 14] = PAGE_TABLE_BASE + 40; // page table base register
+[processTable + 15] = 10; // page table length register
 
 // disk map table initialization
-alias diskMapTable R1;
-diskMapTable = DISK_MAP_TABLE + 20;
-[diskMapTable + 0] = -1;
-[diskMapTable + 1] = -1;
-[diskMapTable + 2] = -1;
-[diskMapTable + 3] = -1;
-[diskMapTable + 4] = 9;
-[diskMapTable + 5] = 10;
-[diskMapTable + 6] = -1;
-[diskMapTable + 7] = -1;
-[diskMapTable + 8] = -1;
-[diskMapTable + 9] = -1;
-
-// memory free list
-[MEMORY_FREE_LIST + 78] = 1;
-[MEMORY_FREE_LIST + 79] = 1;
-[MEMORY_FREE_LIST + 80] = 1;
-
-//setting all other processes to terminated
-i = 3;
-while (i < 16) do
-    [PROCESS_TABLE + 16 * i + 4] = TERMINATED;
+alias diskMapTable R1; // Alias for disk map table
+diskMapTable = DISK_MAP_TABLE + 20; // Set disk map table
+i = 0;
+while (i < 10) do
+    [diskMapTable + i] = -1; // Initialize disk map table
     i = i + 1;
 endwhile;
 
-[TERMINAL_STATUS_TABLE] = 0;
-[DISK_STATUS_TABLE] = 0;
-[SYSTEM_STATUS_TABLE + 2] = 47;
-[SYSTEM_STATUS_TABLE + 3] = 0;
+[diskMapTable + 4] = 9; // Disk map entry
+[diskMapTable + 5] = 10; // Disk map entry
 
-return;
+//setting all other processes to terminated
+i = 0;
+while (i < 16) do
+    if (i > 2) then
+        [PROCESS_TABLE + 16 * i + 4] = TERMINATED; // Set process state to terminated
+    endif;
+    [PROCESS_TABLE + 16 * i] = 0; // Reset tick
+    i = i + 1;
+endwhile;
+
+[TERMINAL_STATUS_TABLE] = 0; // Initialize terminal status table
+[DISK_STATUS_TABLE] = 0; // Initialize disk status table
+[SYSTEM_STATUS_TABLE + 2] = 45; // Initialize system status table
+[SYSTEM_STATUS_TABLE + 3] = 0; // Initialize system status table
+[SYSTEM_STATUS_TABLE + 4] = 0; // Initialize system status table
+[SYSTEM_STATUS_TABLE + 5] = 0; // Initialize system status table
+
+return; // End of program
