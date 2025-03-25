@@ -83,11 +83,12 @@ if (sysCallNumber == 3) then // close system call
     [returnAddress] = 0;
 endif;
 
-//Seek System Call
+// Seek System Call
 if (sysCallNumber == 6) then
     alias inodeIndex R6;
     inodeIndex = [OPEN_FILE_TABLE + 4 * openFileTableEntry];
 
+    // Call acquire_inode() function in the Resource Manager module to lock the inode
     multipush(R0, R1, R2, R3, R4, R5, R6);
     R1 = 4;
     R3 = [SYSTEM_STATUS_TABLE + 1];
@@ -97,22 +98,24 @@ if (sysCallNumber == 6) then
     multipop(R0, R1, R2, R3, R4, R5, R6);
 
     if (R9 == -1) then
-        [returnAddress] = -1;
+        [returnAddress] = -1; // If locking fails, return -1
         goto exit;
     endif;
 
     alias fileSize R7;
     if (inodeIndex == INODE_ROOT) then
-        fileSize = 480;
+        fileSize = 480; // Set file size for root inode
     else
-        fileSize = [INODE_TABLE + inodeIndex * 16 + 2];
+        fileSize = [INODE_TABLE + inodeIndex * 16 + 2]; // Get file size from inode table
     endif;
 
     alias lSeek R8;
-    lSeek = [OPEN_FILE_TABLE + 4 * openFileTableEntry + 2];
+    lSeek = [OPEN_FILE_TABLE + 4 * openFileTableEntry + 2]; // Get current lseek position
     alias offset R9;
-    offset = [[PTBR + 2 * ((userSP - 3) / 512)] * 512 + (userSP - 3) % 512];
+    offset = [[PTBR + 2 * ((userSP - 3) / 512)] * 512 + (userSP - 3) % 512]; // Get offset from user stack
+
     if (lSeek + offset < 0) then
+        // Call release_inode() function in the Resource Manager module to free the inode
         multipush(R1, R2, R3);
         R1 = 5;
         R3 = [SYSTEM_STATUS_TABLE + 1];
@@ -120,20 +123,21 @@ if (sysCallNumber == 6) then
         call RESOURCE_MANAGER;
         multipop(R1, R2, R3);
 
-        [returnAddress] = -2;
+        [returnAddress] = -2; // If offset is invalid, return -2
         goto exit;
     endif;
 
     if (offset == 0) then
-        [OPEN_FILE_TABLE + 4 * openFileTableEntry + 2] = 0;
+        [OPEN_FILE_TABLE + 4 * openFileTableEntry + 2] = 0; // Set lseek value to 0 if offset is 0
     else
         if (lSeek + offset > fileSize) then
-            [OPEN_FILE_TABLE + 4 * openFileTableEntry + 2] = fileSize;
+            [OPEN_FILE_TABLE + 4 * openFileTableEntry + 2] = fileSize; // Set lseek value to file size if lseek + offset is greater than file size
         else
-            [OPEN_FILE_TABLE + 4 * openFileTableEntry + 2] = lSeek + offset;
+            [OPEN_FILE_TABLE + 4 * openFileTableEntry + 2] = lSeek + offset; // Set lseek value to lseek + offset
         endif;
     endif;
 
+    // Call release_inode() function in the Resource Manager module to free the inode
     multipush(R1, R2, R3);
     R1 = 5;
     R3 = [SYSTEM_STATUS_TABLE + 1];
@@ -141,11 +145,11 @@ if (sysCallNumber == 6) then
     call RESOURCE_MANAGER;
     multipop(R1, R2, R3);
 
-    [returnAddress] = 0;
+    [returnAddress] = 0; // Return 0 on success
 endif;
 
 exit:
-SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13];
-[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13]; // Restore SP to User SP
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0; // Reset the MODE_FLAG
 
-ireturn;
+ireturn; // Return from system call

@@ -1,95 +1,98 @@
 // Set mode flag to system call number
-[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 7;
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 7; // Set the MODE_FLAG to 7, indicating the process is in the read system call
 
 alias userSP R0;
 userSP = SP;
 
-[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13] = SP;
-
-SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 11] * 512 - 1;
+// Switch to Kernel Stack
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13] = SP; // Save the value of SP to the USER SP field in the Process Table entry
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 11] * 512 - 1; // Set the value of SP to the beginning of User Area Page
 
 alias returnAddress R1;
-returnAddress = [PTBR + 2 * ((userSP - 1) / 512)] * 512 + (userSP - 1) % 512;
+returnAddress = [PTBR + 2 * ((userSP - 1) / 512)] * 512 + (userSP - 1) % 512; // Get the return address from the user stack
 
 alias fileDescriptor R2;
-fileDescriptor = [[PTBR + 2 * ((userSP - 4) / 512)] * 512 + (userSP - 4) % 512];
+fileDescriptor = [[PTBR + 2 * ((userSP - 4) / 512)] * 512 + (userSP - 4) % 512]; // Get the file descriptor from the user stack
 
 if (fileDescriptor != -1) then 
-	// File Read
-	if (fileDescriptor < 0 || fileDescriptor > 7) then
-        [returnAddress] = -1;
+    // File Read
+    if (fileDescriptor < 0 || fileDescriptor > 7) then // Check if file descriptor is invalid
+        [returnAddress] = -1; // Return -1 if file descriptor is invalid
     else
         alias resourceTableEntry R3;
-        resourceTableEntry = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 11] * 512 + RESOURCE_TABLE_OFFSET + fileDescriptor * 2;
+        resourceTableEntry = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 11] * 512 + RESOURCE_TABLE_OFFSET + fileDescriptor * 2; // Locate the Per-Process Resource Table entry
 
-        if ([resourceTableEntry + 0] != FILE) then
-            [returnAddress] = -1;
+        if ([resourceTableEntry + 0] != FILE) then // Check if the Resource identifier field is invalid or does not indicate a FILE
+            [returnAddress] = -1; // Return -1 if no file is open with this file descriptor
         else
             alias inodeIndex R4;
             alias openFileTableEntry R5;
-            openFileTableEntry = [resourceTableEntry + 1];
-            inodeIndex = [OPEN_FILE_TABLE + openFileTableEntry * 4 + 0];
+            openFileTableEntry = [resourceTableEntry + 1]; // Get the index of the Open File Table entry
+            inodeIndex = [OPEN_FILE_TABLE + openFileTableEntry * 4 + 0]; // Get the index of the Inode Table entry
 
+            // Acquire the Lock on the File by calling the acquire_inode() function in the Resource Manager module
             multipush(R0, R1, R2, R3, R4, R5);
             R1 = 4;
             R2 = inodeIndex;
             R3 = [SYSTEM_STATUS_TABLE + 1];
-            call RESOURCE_MANAGER; // acquire inode
+            call RESOURCE_MANAGER;
             R9 = R0;
             multipop(R0, R1, R2, R3, R4, R5);
 
-            if (R9 == -1) then
-                [returnAddress] = -1;
+            if (R9 == -1) then // Check if acquiring the inode fails
+                [returnAddress] = -1; // Return -1 if acquiring the inode fails
             else
                 alias lSeek R6;
-                lSeek = OPEN_FILE_TABLE + openFileTableEntry * 4 + 2;
+                lSeek = OPEN_FILE_TABLE + openFileTableEntry * 4 + 2; // Get the Lseek position from the Open File Table entry
 
                 alias wordAddress R7;
-                wordAddress = [[PTBR + 2 * ((userSP - 3) / 512)] * 512 + (userSP - 3) % 512];
+                wordAddress = [[PTBR + 2 * ((userSP - 3) / 512)] * 512 + (userSP - 3) % 512]; // Get the physical address corresponding to the logical address of Memory Buffer address given as input
                 wordAddress = [PTBR + 2 * (wordAddress / 512)] * 512 + wordAddress % 512;
 
-                if (inodeIndex == INODE_ROOT) then
-                    if ([lSeek] == 480) then
-                        [returnAddress] = -2;
+                if (inodeIndex == INODE_ROOT) then // Check if the File corresponds to Root file
+                    if ([lSeek] == 480) then // Check if the lseek value is equal to the root file size
+                        [returnAddress] = -2; // Return -2 if end of file is reached
                     else
-                        [wordAddress] = [ROOT_FILE + [lSeek]];
-                        [lSeek] = [lSeek] + 1;
-                        [returnAddress] = 0;
+                        [wordAddress] = [ROOT_FILE + [lSeek]]; // Read from the word at lseek position in memory copy of root file
+                        [lSeek] = [lSeek] + 1; // Increment the Lseek position in the Open File Table
+                        [returnAddress] = 0; // Return 0 on success
                     endif;
                 else
-                    if ([lSeek] == [INODE_TABLE + inodeIndex * 16 + 2]) then
-                        [returnAddress] = -2;
+                    if ([lSeek] == [INODE_TABLE + inodeIndex * 16 + 2]) then // Check if lseek position is same as the file size
+                        [returnAddress] = -2; // Return -2 if end of file is reached
                     else
                         alias diskBlock R11;
                         alias offset R12;
-                        diskBlock = [INODE_TABLE + inodeIndex * 16 + 8 + ([lSeek] / 512)];
-                        offset = [lSeek] % 512;
+                        diskBlock = [INODE_TABLE + inodeIndex * 16 + 8 + ([lSeek] / 512)]; // Find the disk block number
+                        offset = [lSeek] % 512; // Find the position in the block from which input is read
 
+                        // Read the data from the File Buffer by calling the buffered_read() function in the File Manager module
                         multipush(R0, R1, R2, R3, R4, R5, R6, R7, R11, R12);
                         R1 = 2;
                         R2 = diskBlock;
                         R3 = offset;
                         R4 = wordAddress;
-                        call FILE_MANAGER; // buffer read
+                        call FILE_MANAGER;
                         multipop(R0, R1, R2, R3, R4, R5, R6, R7, R11, R12);
-                        [lSeek] = [lSeek] + 1;
-                        [returnAddress] = 0;
+                        [lSeek] = [lSeek] + 1; // Increment the Lseek position in the Open File Table
+                        [returnAddress] = 0; // Return 0 on success
                     endif;
                 endif;
                 
+                // Release the Lock on the File by calling the release_inode() function in the Resource Manager module
                 multipush(R0, R1, R2, R3, R4, R5, R6, R7, R11, R12);
                 R1 = 5;
                 R2 = inodeIndex;
                 R3 = [SYSTEM_STATUS_TABLE + 1];
-                call RESOURCE_MANAGER; // relase inode
+                call RESOURCE_MANAGER;
                 multipop(R0, R1, R2, R3, R4, R5, R6, R7, R11, R12);
             endif;
         endif;
     endif;
 else 
-	// Terminal Read
+    // Terminal Read
     alias wordAddress R3;
-    wordAddress = [[PTBR + 2 * ((userSP - 3) / 512)] * 512 + (userSP - 3) % 512];
+    wordAddress = [[PTBR + 2 * ((userSP - 3) / 512)] * 512 + (userSP - 3) % 512]; // Get the physical address corresponding to the logical address of Memory Buffer address given as input
 
     multipush(R0, R1, R2, R3);
 
@@ -97,15 +100,15 @@ else
     R2 = [SYSTEM_STATUS_TABLE + 1];
     R3 = wordAddress;
 
-    call MOD_4;
+    call MOD_4; // Call the terminal_read() function in the Device Manager module
 
     multipop(R0, R1, R2, R3);
 
-    [returnAddress] = 0;
+    [returnAddress] = 0; // Return 0 on success
 endif;
 
-[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+// Switch back to the user stack
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0; // Reset the MODE_FLAG
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13]; // Restore SP to User SP
 
-SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13];
-
-ireturn;
+ireturn; // Return from system call

@@ -1,29 +1,28 @@
 // Set mode flag to system call number
-[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 5;
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 5; // Set the MODE_FLAG to 5, indicating the process is in the write system call
 
 alias userSP R0;
 userSP = SP;
 
-// store user stack pointer in UPTR
-[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13] = SP;
-
-// Set SP to start of kernel stack
-SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 11] * 512 - 1;
+// Switch to Kernel Stack
+[PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13] = SP; // Save the value of SP to the USER SP field in the Process Table entry
+SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 11] * 512 - 1; // Set the value of SP to the beginning of User Area Page
 
 alias returnAddress R1;
-returnAddress = [PTBR + 2 * ((userSP - 1) / 512)] * 512 + (userSP - 1) % 512;
+returnAddress = [PTBR + 2 * ((userSP - 1) / 512)] * 512 + (userSP - 1) % 512; // Get the return address from the user stack
 
 alias fileDescriptor R2;
-fileDescriptor = [[PTBR + 2 * ((userSP - 4) / 512)] * 512 + (userSP - 4) % 512];
+fileDescriptor = [[PTBR + 2 * ((userSP - 4) / 512)] * 512 + (userSP - 4) % 512]; // Get the file descriptor from the user stack
 
 alias word R3;
-word = [[PTBR + 2 * ((userSP - 3) / 512)] * 512 + ((userSP - 3) % 512)];
+word = [[PTBR + 2 * ((userSP - 3) / 512)] * 512 + ((userSP - 3) % 512)]; // Get the word to be written from the user stack
 
 alias process_table R4;
 process_table = PROCESS_TABLE + 16 * [SYSTEM_STATUS_TABLE + 1];
 
-// write system call = 5
+// Write system call = 5
 if (fileDescriptor == -2) then
+    // Terminal Write
     multipush(R0, R1, R2, R3);
 
     alias arg1 R1;
@@ -34,34 +33,43 @@ if (fileDescriptor == -2) then
     arg2 = [SYSTEM_STATUS_TABLE  + 1];
     arg3 = word;
 
-    call MOD_4;
+    call MOD_4; // Call the terminal_write() function in the Device Manager module
 
     multipop(R0, R1, R2, R3);
 
-    [returnAddress] = 0;
+    [returnAddress] = 0; // Return 0 on success
+
+    // Switch back to the user stack
+    SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13]; // Restore SP to User SP
+    [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0; // Reset the MODE_FLAG
+
+    ireturn; // Return from system call
 else
-    if (fileDescriptor < 0 || fileDescriptor > 7) then
-        [returnAddress] = -1;
+    // File Write
+    if (fileDescriptor < 0 || fileDescriptor > 7) then // Check if file descriptor is invalid
+        [returnAddress] = -1; // Return -1 if file descriptor is invalid
         goto exit;
     endif;
-    alias resourceTable R5;
-    resourceTable = [process_table + 11] * 512 + RESOURCE_TABLE_OFFSET;
 
-    if ([resourceTable + 2 * fileDescriptor] != FILE) then
-        [returnAddress] = -1;
+    alias resourceTable R5;
+    resourceTable = [process_table + 11] * 512 + RESOURCE_TABLE_OFFSET; // Locate the Per-Process Resource Table entry
+
+    if ([resourceTable + 2 * fileDescriptor] != FILE) then // Check if the Resource identifier field is invalid or does not indicate a FILE
+        [returnAddress] = -1; // Return -1 if no file is open with this file descriptor
         goto exit;
     endif;
 
     alias openFileTableEntry R6;
-    openFileTableEntry = [resourceTable + 2 * fileDescriptor + 1];
+    openFileTableEntry = [resourceTable + 2 * fileDescriptor + 1]; // Get the index of the Open File Table entry
     alias inodeIndex R7;
-    inodeIndex = [OPEN_FILE_TABLE + 4 * openFileTableEntry];
+    inodeIndex = [OPEN_FILE_TABLE + 4 * openFileTableEntry]; // Get the index of the Inode Table entry
 
     if ([process_table + 3] != 1 && [INODE_TABLE + 16 * inodeIndex + 3] != [process_table + 3] && [INODE_TABLE + inodeIndex * 16 + 4] == EXCLUSIVE) then
-        [returnAddress] = -3;
+        [returnAddress] = -3; // Return -3 if the current user is not root, does not own the file, and exclusive permission is set
         goto exit;
     endif;
 
+    // Acquire the Lock on the File by calling the acquire_inode() function in the Resource Manager module
     multipush(R1, R2, R3, R4, R5, R6, R7);
     R1 = 4;
     R3 = [SYSTEM_STATUS_TABLE + 1];
@@ -69,29 +77,29 @@ else
     call RESOURCE_MANAGER;
     multipop(R1, R2, R3, R4, R5, R6, R7);
 
-    if (R0 == -1) then
-        [returnAddress] = -1;
+    if (R0 == -1) then // Check if acquiring the inode fails
+        [returnAddress] = -1; // Return -1 if acquiring the inode fails
         goto exit;
     endif;
 
     alias lSeek R8;
-    lSeek = [OPEN_FILE_TABLE + 4 * openFileTableEntry + 2];
+    lSeek = [OPEN_FILE_TABLE + 4 * openFileTableEntry + 2]; // Get the Lseek position from the Open File Table entry
 
-    if (lSeek == MAX_FILE_SIZE) then
+    if (lSeek == MAX_FILE_SIZE) then // Check if lseek position is same as the MAX_FILE_SIZE
         multipush(R1, R2, R3);
         R1 = 5;
         R3 = [SYSTEM_STATUS_TABLE + 1];
         R2 = inodeIndex;
-        call RESOURCE_MANAGER;
+        call RESOURCE_MANAGER; // Release the inode
         multipop(R1, R2, R3);
-        [returnAddress] = -2;
+        [returnAddress] = -2; // Return -2 if maximum file size of 2048 is reached
         goto exit;
     endif;
 
-    if (lSeek % 512 == 0 && lSeek == [INODE_TABLE + 16 * inodeIndex + 2]) then
+    if (lSeek % 512 == 0 && lSeek == [INODE_TABLE + 16 * inodeIndex + 2]) then // Check if the Lseek position is a multiple of 512 and the same as File size in the inode table
         multipush(R1, R2, R3, R4, R5, R6, R7, R8);
         R1 = 3;
-        call MEMORY_MANAGER;
+        call MEMORY_MANAGER; // Allocate a new block
         multipop(R1, R2, R3, R4, R5, R6, R7, R8);
 
         if (R0 == -1) then
@@ -99,48 +107,51 @@ else
             R1 = 5;
             R3 = [SYSTEM_STATUS_TABLE + 1];
             R2 = inodeIndex;
-            call RESOURCE_MANAGER;
+            call RESOURCE_MANAGER; // Release the inode
             multipop(R1, R2, R3);
             
-            [returnAddress] = -2;
+            [returnAddress] = -2; // Return -2 if block allocation fails
             goto exit;
         endif;
 
-        [INODE_TABLE + 16 * inodeIndex + 8 + (lSeek / 512)] = R0;
+        [INODE_TABLE + 16 * inodeIndex + 8 + (lSeek / 512)] = R0; // Update the inode table with the new block number
     endif;
 
     alias blockNumber R9;
     alias offset R10;
-    blockNumber = [INODE_TABLE + 16 * inodeIndex + 8 + (lSeek / 512)];
-    offset = lSeek % 512;
+    blockNumber = [INODE_TABLE + 16 * inodeIndex + 8 + (lSeek / 512)]; // Find the disk block number
+    offset = lSeek % 512; // Find the position in the block from which input is to be written
     
     multipush(R1, R2, R3, R4, R5, R6, R7, R8, R9, R10);
-	R1 = 1;
-	R2 = blockNumber;
-	R4 = word;
-	R3 = offset;
-	call FILE_MANAGER;
-	multipop(R1, R2, R3, R4, R5, R6, R7, R8, R9, R10);
+    R1 = 1;
+    R2 = blockNumber;
+    R4 = word;
+    R3 = offset;
+    call FILE_MANAGER; // Write the word to the File Buffer
+    multipop(R1, R2, R3, R4, R5, R6, R7, R8, R9, R10);
 
-    // if size was increasesd
+    // If size was increased
     if (lSeek == [INODE_TABLE + 16 * inodeIndex + 2]) then
-        [INODE_TABLE + 16 * inodeIndex + 2] = [INODE_TABLE + 16 * inodeIndex + 2] + 1;
+        [INODE_TABLE + 16 * inodeIndex + 2] = [INODE_TABLE + 16 * inodeIndex + 2] + 1; // Increment file size in the inode table entry
     endif;
 
-    [OPEN_FILE_TABLE + 4 * openFileTableEntry + 2] = [OPEN_FILE_TABLE + 4 * openFileTableEntry + 2] + 1;
+    [OPEN_FILE_TABLE + 4 * openFileTableEntry + 2] = [OPEN_FILE_TABLE + 4 * openFileTableEntry + 2] + 1; // Increment the Lseek position in the Open File Table entry
 
+    // Release the Lock on the File by calling the release_inode() function in the Resource Manager module
     multipush(R1, R2, R3);
-	R1 = 5;
-	R3 = [SYSTEM_STATUS_TABLE + 1];
-	R2 = inodeIndex;
-	call RESOURCE_MANAGER;
-	multipop(R1, R2, R3);
-    [returnAddress] = 0;
+    R1 = 5;
+    R3 = [SYSTEM_STATUS_TABLE + 1];
+    R2 = inodeIndex;
+    call RESOURCE_MANAGER;
+    multipop(R1, R2, R3);
+
+    [returnAddress] = 0; // Return 0 on success
     goto exit;
 endif;
 
 exit:
-    SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13];
-    [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0;
+    // Switch back to the user stack
+    SP = [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 13]; // Restore SP to User SP
+    [PROCESS_TABLE + [SYSTEM_STATUS_TABLE + 1] * 16 + 9] = 0; // Reset the MODE_FLAG
 
-ireturn;
+ireturn; // Return from system call

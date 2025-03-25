@@ -1,70 +1,71 @@
 alias currentPID R0;
 alias process_table_entry R1;
 
-currentPID = [SYSTEM_STATUS_TABLE + 1];
-process_table_entry = PROCESS_TABLE + 16 * currentPID;
+currentPID = [SYSTEM_STATUS_TABLE + 1]; // Get the current process ID from the System Status Table
+process_table_entry = PROCESS_TABLE + 16 * currentPID; // Get the process table entry for the current process
 
-multipush(BP);
+multipush(BP); // Push the BP register of the current process to the top of its kernel stack
 
-[process_table_entry + 12] = SP % 512;
-[process_table_entry + 14] = PTBR;
-[process_table_entry + 15] = PTLR;
+// Save the SP%512, PTBR, and PTLR to the Kernel SP, PTBR, and PTLR fields of the Process Table entry of the current process
+[process_table_entry + 12] = SP % 512; // Save the stack pointer offset
+[process_table_entry + 14] = PTBR; // Save the page table base register
+[process_table_entry + 15] = PTLR; // Save the page table length register
 
 alias i R2;
 alias state R3;
 alias newPID R4;
 
-if ([SYSTEM_STATUS_TABLE + 5] != 0) then
-    if ([PROCESS_TABLE + 15 * 16 + 4] == WAIT_DISK) then
-        i = 0;
+if ([SYSTEM_STATUS_TABLE + 5] != 0) then // Check if PAGING_STATUS in the System Status Table is not 0 (Paging is ongoing)
+    if ([PROCESS_TABLE + 15 * 16 + 4] == WAIT_DISK) then // If the paging process is blocked (executing a disk operation)
+        i = 0; // Choose Idle Process for scheduling
     else
-        i = SWAPPER_DAEMON;
+        i = SWAPPER_DAEMON; // Choose the Swapper Daemon to be scheduled
     endif;
 else
-    i = currentPID + 1;
-    while (i < 16) do
-        state = [PROCESS_TABLE + i * 16 + 4];
+    i = currentPID + 1; // Start from the next process
+    while (i < 16) do // Loop through the process table
+        state = [PROCESS_TABLE + i * 16 + 4]; // Get the process state
         if ((state == READY || state == CREATED) && [PROCESS_TABLE + i * 16 + 6] != 1) then
-            break;
+            break; // Select the next READY or CREATED process that is not swapped out
         endif;
         i = i + 1;
     endwhile;
 
-    if (i == 16) then
+    if (i == 16) then // If no process found, start from the beginning
         i = 1;
         while (i < currentPID) do
-            state = [PROCESS_TABLE + i * 16 + 4];
+            state = [PROCESS_TABLE + i * 16 + 4]; // Get the process state
             if ((state == CREATED || state == READY) && [PROCESS_TABLE + i * 16 + 6] != 1) then
-                break;
+                break; // Select the next READY or CREATED process that is not swapped out
             endif;
             i = i + 1;
         endwhile;
     endif;
 
-    if (i == currentPID) then
+    if (i == currentPID) then // If no process found, set to IDLE process
         i = 0;
     endif;
 endif;
 
-newPID = i;
+newPID = i; // Set the new process ID
 
-process_table_entry = PROCESS_TABLE + newPID * 16;
-SP = [process_table_entry + 11] * 512 + [process_table_entry + 12];
-PTBR = [process_table_entry + 14];
-PTLR = [process_table_entry + 15];
+process_table_entry = PROCESS_TABLE + newPID * 16; // Get the process table entry for the new process
+SP = [process_table_entry + 11] * 512 + [process_table_entry + 12]; // Set the stack pointer
+PTBR = [process_table_entry + 14]; // Set the page table base register
+PTLR = [process_table_entry + 15]; // Set the page table length register
 
-[SYSTEM_STATUS_TABLE + 1] = newPID;
+[SYSTEM_STATUS_TABLE + 1] = newPID; // Update the current process ID in the System Status Table
 
-if ([process_table_entry + 4] == CREATED) then
-    SP = [process_table_entry + 13];
-    BP = [[process_table_entry + 11] * 512];
-    [process_table_entry + 4] = RUNNING;
-    [process_table_entry + 9] = 0; // mode flag
-    ireturn;
+if ([process_table_entry + 4] == CREATED) then // If the new process is in CREATED state
+    SP = [process_table_entry + 13]; // Set SP to the value of UserSP field in the Process table entry of the new process
+    BP = [[process_table_entry + 11] * 512]; // Set BP to the value stored at the beginning of the kernel stack
+    [process_table_entry + 4] = RUNNING; // Set the state of the new process as RUNNING
+    [process_table_entry + 9] = 0; // Set the MODE_FLAG in the process table entry to 0
+    ireturn; // Use ireturn statement to transfer control back to user mode
 endif;
 
-[process_table_entry + 4] = RUNNING;
+[process_table_entry + 4] = RUNNING; // Set the state of the new process as RUNNING
 
-multipop(BP);
+multipop(BP); // Restore the BP register of the new process from the top of its kernel stack
 
-return;
+return; // Return from the scheduler

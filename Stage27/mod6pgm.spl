@@ -20,18 +20,18 @@ if (functionNum == SWAP_OUT) then
     while (counter < MAX_PROC_NUM - 1) do
         if ([PROCESS_TABLE + counter*16 + 6] == 0) then
             if ([PROCESS_TABLE + counter*16 + 4] == WAIT_PROCESS) then
-                swapPID = counter;
+                swapPID = counter; // Choose a process in WAIT_PROCESS state
                 break;
             endif;
             if (waitSemPID == -1 && [PROCESS_TABLE + counter*16 + 4] == WAIT_SEMAPHORE) then
-                waitSemPID = counter;
+                waitSemPID = counter; // Choose a process in WAIT_SEMAPHORE state if no process in WAIT_PROCESS state
             endif;
 
             alias tempPCB R13;
             tempPCB = PROCESS_TABLE + counter*16;
             if ([tempPCB+4] != TERMINATED && [tempPCB+4] != ALLOCATED && [tempPCB] != RUNNING) then
                 if ([tempPCB] > maxTICK) then
-                    maxTICK = [tempPCB];
+                    maxTICK = [tempPCB]; // Choose the process with the highest TICK value
                     maxTickPID = counter;
                 endif;
             endif;
@@ -41,19 +41,19 @@ if (functionNum == SWAP_OUT) then
 
     if (swapPID == -1) then
         if (waitSemPID != -1) then
-            swapPID = waitSemPID;
+            swapPID = waitSemPID; // If no process in WAIT_PROCESS state, choose a process in WAIT_SEMAPHORE state
         else
-            swapPID = maxTickPID;
+            swapPID = maxTickPID; // If no process in WAIT_PROCESS and WAIT_SEMAPHORE state, choose the process with the highest TICK value
         endif;
     endif;
 
     if (swapPID == -1) then
-        [SYSTEM_STATUS_TABLE+5] = 0;
+        [SYSTEM_STATUS_TABLE+5] = 0; // Reset PAGING_STATUS
         R0 = -1;
         return;
     endif;
 
-    [PROCESS_TABLE + swapPID*16] = 0;
+    [PROCESS_TABLE + swapPID*16] = 0; // Set TICK field to 0
 
     alias swapPTBR R4;
     swapPTBR = [PROCESS_TABLE + swapPID*16 + 14];
@@ -67,17 +67,17 @@ if (functionNum == SWAP_OUT) then
             if (pageNumber != -1 && [MEMORY_FREE_LIST + pageNumber] == 1) then
                 multipush (R1, R2, R3, R4, R5, R6);
                 R1 = GET_SWAP_BLOCK;
-                call MEMORY_MANAGER;
+                call MEMORY_MANAGER; // Get a free swap block
                 multipop  (R1, R2, R3, R4, R5, R6);
 
-                [DISK_MAP_TABLE + 10*swapPID + (counter/2)] = R0;
+                [DISK_MAP_TABLE + 10*swapPID + (counter/2)] = R0; // Store the disk block number in the Disk Map Table
 
                 multipush (R1, R2, R3, R4, R5, R6);
                 R1 = DISK_STORE;
                 R2 = SWAPPER_DAEMON;
                 R3 = pageNumber;
                 R4 = R0;
-                call DEVICE_MANAGER;
+                call DEVICE_MANAGER; // Write the heap page to the block
                 multipop  (R1, R2, R3, R4, R5, R6);
             endif;
         endif;
@@ -86,20 +86,20 @@ if (functionNum == SWAP_OUT) then
             multipush (R1, R3, R3, R5);
             R1 = RELEASE_PAGE;
             R2 = pageNumber;
-            call MEMORY_MANAGER;
+            call MEMORY_MANAGER; // Deallocate the page
             multipop  (R1, R3, R3, R5);
         endif;
 
-        [swapPTBR + counter] = -1;
+        [swapPTBR + counter] = -1; // Invalidate the Page table entry
         [swapPTBR + counter + 1] = "0000";
 
         counter = counter + 2;
     endwhile;
 
-    [PROCESS_TABLE + swapPID*16 + 6] = 1;
+    [PROCESS_TABLE + swapPID*16 + 6] = 1; // Set the SWAP_FLAG field to 1
 
-    [SYSTEM_STATUS_TABLE+4] = [SYSTEM_STATUS_TABLE+4] + 1;
-    [SYSTEM_STATUS_TABLE+5] = 0;
+    [SYSTEM_STATUS_TABLE+4] = [SYSTEM_STATUS_TABLE+4] + 1; // Increment SWAP_COUNT
+    [SYSTEM_STATUS_TABLE+5] = 0; // Reset PAGING_STATUS
     return;
 endif;
 
@@ -115,7 +115,7 @@ if (functionNum == SWAP_IN) then
     while (counter < MAX_PROC_NUM - 1) do
         if ([PROCESS_TABLE + counter*16 + 6] == 1 && [PROCESS_TABLE + counter*16 + 4] == READY) then
             if ([PROCESS_TABLE + counter*16] > maxTICK) then
-                swapPID = counter;
+                swapPID = counter; // Choose the swapped process in the READY state with the highest TICK
                 maxTICK = [PROCESS_TABLE + counter*16];
             endif;
         endif;
@@ -123,12 +123,12 @@ if (functionNum == SWAP_IN) then
     endwhile;
 
     if (swapPID == -1) then
-        [SYSTEM_STATUS_TABLE+5] = 0;
+        [SYSTEM_STATUS_TABLE+5] = 0; // Reset PAGING_STATUS
         R0 = -1;
         return;
     endif;
 
-    [PROCESS_TABLE + swapPID*16] = 0;
+    [PROCESS_TABLE + swapPID*16] = 0; // Set TICK field to 0
 
     alias swapPTBR R4;
     swapPTBR = [PROCESS_TABLE + swapPID*16 + 14];
@@ -147,11 +147,11 @@ if (functionNum == SWAP_IN) then
         if (blockNumber != -1) then
             multipush (R1, R2, R3, R4, R5, R6);
             R1 = GET_FREE_PAGE;
-            call MEMORY_MANAGER;
+            call MEMORY_MANAGER; // Allocate a memory page
             multipop  (R1, R2, R3, R4, R5, R6);
 
             [swapPTBR + counter] = R0;
-            [swapPTBR + counter + 1] = "0110";
+            [swapPTBR + counter + 1] = "0110"; // Set the Page table entry
             if (counter >= 8 && counter < 16) then
                 [swapPTBR + counter + 1] = "0100";
             endif;
@@ -161,24 +161,24 @@ if (functionNum == SWAP_IN) then
             R2 = SWAPPER_DAEMON;
             R3 = R0;
             R4 = blockNumber;
-            call DEVICE_MANAGER;
+            call DEVICE_MANAGER; // Load the heap page from the disk block
             multipop  (R1, R2, R3, R4, R5, R6);
 
             multipush (R1, R2, R3, R4, R5, R6);
             R1 = RELEASE_BLOCK;
             R2 = blockNumber;
             R3 = SWAPPER_DAEMON;
-            call MEMORY_MANAGER;
+            call MEMORY_MANAGER; // Free the swap block
             multipop   (R1, R2, R3, R4, R5, R6);
 
-            [DISK_MAP_TABLE + swapPID*10 + (counter/2)] = -1;
+            [DISK_MAP_TABLE + swapPID*10 + (counter/2)] = -1; // Invalidate the Disk Map Table entry
         endif;
         counter = counter + 2;
     endwhile;
 
-    [PROCESS_TABLE + swapPID*16 + 6] = 0;
+    [PROCESS_TABLE + swapPID*16 + 6] = 0; // Set the SWAP_FLAG field to 0
 
-    [SYSTEM_STATUS_TABLE+4] = [SYSTEM_STATUS_TABLE+4] - 1;
-    [SYSTEM_STATUS_TABLE+5] = 0;
+    [SYSTEM_STATUS_TABLE+4] = [SYSTEM_STATUS_TABLE+4] - 1; // Decrement SWAP_COUNT
+    [SYSTEM_STATUS_TABLE+5] = 0; // Reset PAGING_STATUS
     return;
 endif;
