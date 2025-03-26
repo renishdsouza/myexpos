@@ -38,5 +38,5 @@ load --module 2 $HOME/myexpos/Stage27/mod2mm.xsm
 load --module 3 $HOME/myexpos/Stage27/mod3fm.xsm
 load --module 4 $HOME/myexpos/Stage27/mod4dm.xsm
 load --module 5 $HOME/myexpos/Stage27/mod5sc.xsm
-load --module 7 $HOME/myexpos/Stage27/mod6pgm.xsm
+load --module 6 $HOME/myexpos/Stage27/mod6pgm.xsm
 load --module 7 $HOME/myexpos/Stage27/mod7bt.xsm
